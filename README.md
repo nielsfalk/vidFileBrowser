@@ -264,7 +264,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 ### Finder tags
 
-- [ ] T31 Tag service: read and write Finder tags and label colors
+- [x] T31 Tag service: read and write Finder tags and label colors
 - [ ] T32 Tags submenu: toggle each tag color, "Remove all tags"
 
 ### Favorite folders
