@@ -2,6 +2,8 @@ import SwiftUI
 
 @main
 struct VidFileBrowserApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     @State private var favorites: FavoritesStore
     @State private var model: AppModel
 

@@ -229,6 +229,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T06 Main window layout: breadcrumb on top, resizable split view with file browser left and player right
 - [x] T07 Open a folder via an open dialog or by dropping a folder onto the app
 - [x] T08 Remember the last folder, window frame and divider position across launches
+- [x] T56 Quit the app when the last window is closed
 
 ### Breadcrumb path
 
