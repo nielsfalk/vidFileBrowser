@@ -189,6 +189,7 @@ make generate   # create VidFileBrowser.xcodeproj
 make build      # generate and build (Debug)
 make run        # build and open the app
 make clean      # remove the build output and the generated project
+make installHooks  # install the git hooks from scripts/git-hooks
 ```
 
 ## Tasks
@@ -200,7 +201,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T01 Write the feature specification in this README
 - [x] T02 Choose the tech stack
 - [x] T03 Create the Xcode project: SwiftUI app, macOS 14 deployment target, hardened runtime, no App Sandbox
-- [ ] T04 Add git hooks (`commit-msg`, `pre-push`) that enforce the commit rules, plus an `installHooks` task
+- [x] T04 Add git hooks (`commit-msg`, `pre-push`) that enforce the commit rules, plus an `installHooks` task
 - [ ] T05 Add a unit test target and a command-line build and test command (`xcodebuild test`)
 - [ ] T51 Dependency check on launch: find `libmpv` and `ffmpeg` in `/opt/homebrew` and `/usr/local`, show the install command if missing
 

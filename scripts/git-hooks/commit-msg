@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+RULES_HOOK_NAME="commit-msg"
+hooks_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=git-hooks-lib.sh
+. "$hooks_dir/git-hooks-lib.sh"
+
+message_file="${1:?commit-msg hook: missing commit message file}"
+validate_commit_message "$(cat "$message_file")"

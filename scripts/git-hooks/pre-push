@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+RULES_HOOK_NAME="pre-push"
+hooks_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=git-hooks-lib.sh
+. "$hooks_dir/git-hooks-lib.sh"
+
+zero="0000000000000000000000000000000000000000"
+status=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -n "${local_sha:-}" ] || continue
+
+  # Branch deletion.
+  if [ "$local_sha" = "$zero" ]; then
+    continue
+  fi
+
+  if [ "$remote_sha" = "$zero" ]; then
+    # New branch: check every commit that is not already on a remote.
+    commits="$(git rev-list "$local_sha" --not --remotes)"
+  else
+    commits="$(git rev-list "$remote_sha..$local_sha")"
+  fi
+
+  for sha in $commits; do
+    if ! ( validate_commit_message "$(git log -1 --format=%B "$sha")" ); then
+      printf 'pre-push: %s does not follow the commit rules\n' "$(git log -1 --format='%h %s' "$sha")" >&2
+      status=1
+    fi
+  done
+done
+
+exit "$status"
