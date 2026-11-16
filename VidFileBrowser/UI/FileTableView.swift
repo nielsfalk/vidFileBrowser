@@ -34,6 +34,8 @@ struct FileTableView: NSViewRepresentable {
         }
         table.allowsMultipleSelection = false
         table.usesAlternatingRowBackgroundColors = true
+        table.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
+        table.setDraggingSourceOperationMask(.copy, forLocal: false)
         table.rowHeight = 22
         table.style = .inset
         table.columnAutoresizingStyle = .firstColumnOnlyAutoresizingStyle
@@ -106,8 +108,7 @@ struct FileTableView: NSViewRepresentable {
             items.count
         }
 
-        func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-            guard let tableColumn, items.indices.contains(row) else { return nil }
+        func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {            guard let tableColumn, items.indices.contains(row) else { return nil }
             let item = items[row]
 
             switch tableColumn.identifier {
@@ -122,8 +123,12 @@ struct FileTableView: NSViewRepresentable {
             }
         }
 
-        func tableViewSelectionDidChange(_ notification: Notification) {
-            guard let table = notification.object as? NSTableView else { return }
+        func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+            guard items.indices.contains(row) else { return nil }
+            return items[row].url as NSURL
+        }
+
+        func tableViewSelectionDidChange(_ notification: Notification) {            guard let table = notification.object as? NSTableView else { return }
             let ids = table.selectedRowIndexes.compactMap { index in
                 items.indices.contains(index) ? items[index].id : nil
             }

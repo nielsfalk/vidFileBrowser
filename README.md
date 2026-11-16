@@ -291,7 +291,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 - [x] T44 File operation service: copy and move files with conflict detection
 - [x] T45 Conflict dialog: Replace, Keep both, Skip, Cancel and Apply to all
-- [ ] T46 Drag files from the file browser to Finder
+- [x] T46 Drag files from the file browser to Finder
 - [ ] T47 Drop files from Finder into the file browser
 - [ ] T48 Copy, cut and paste files with `Cmd+C`, `Cmd+X` and `Cmd+V`, also with Finder
 
