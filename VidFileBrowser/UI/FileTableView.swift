@@ -93,7 +93,7 @@ struct FileTableView: NSViewRepresentable {
             case FileTableView.valueColumnID:
                 return valueCell(in: tableView, item: item)
             case FileTableView.tagsColumnID:
-                return tagCell(in: tableView)
+                return tagCell(in: tableView, item: item)
             default:
                 return nil
             }
@@ -171,14 +171,17 @@ struct FileTableView: NSViewRepresentable {
             return cell
         }
 
-        private func tagCell(in tableView: NSTableView) -> NSView {
+        private func tagCell(in tableView: NSTableView, item: FileItem) -> NSView {
             let identifier = NSUserInterfaceItemIdentifier("tagCell")
-            if let reused = tableView.makeView(withIdentifier: identifier, owner: self) {
-                return reused
+            let cell: TagCellView
+            if let reused = tableView.makeView(withIdentifier: identifier, owner: self) as? TagCellView {
+                cell = reused
+            } else {
+                cell = TagCellView()
+                cell.identifier = identifier
             }
 
-            let cell = NSTableCellView()
-            cell.identifier = identifier
+            cell.dots.colors = item.tagColors
             return cell
         }
     }

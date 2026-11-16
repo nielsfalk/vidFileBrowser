@@ -233,7 +233,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 - [ ] T11 Directory model: load files and folders of the current folder with name, date, size and tags
 - [x] T12 File list view (`NSTableView`) with Name, Sort value and Tags columns
-- [ ] T13 Show Finder tag colors as dots in the Tags column
+- [x] T13 Show Finder tag colors as dots in the Tags column
 - [ ] T14 Sorting by name, date, label and size, folders always first
 - [ ] T15 Sort dropdown and ascending/descending toggle, stored as a global setting
 - [ ] T16 Keyboard navigation: Up/Down moves the selection, Enter or double-click opens a folder
