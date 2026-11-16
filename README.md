@@ -203,6 +203,12 @@ make test       # generate and run the unit tests
 make run        # build and open the app
 make clean      # remove the build output and the generated project
 make installHooks  # install the git hooks from scripts/git-hooks
+
+make release    # archive a Release build
+make sign       # re-sign with DEVELOPER_ID="Developer ID Application: ..."
+make notarize   # submit and staple with NOTARY_PROFILE=<notarytool profile>
+make dmg        # create dist/VidFileBrowser.dmg
+make dist       # release, sign, notarize and dmg
 ```
 
 ## Tasks
@@ -298,4 +304,4 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 ### Release
 
 - [x] T49 App icon and app metadata
-- [ ] T50 Signing (hardened runtime, `disable-library-validation`), notarization and DMG build
+- [x] T50 Signing (hardened runtime, `disable-library-validation`), notarization and DMG build
