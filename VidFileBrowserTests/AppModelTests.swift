@@ -177,6 +177,24 @@ final class AppModelTests: XCTestCase {
         XCTAssertFalse(model.rename(item, to: "a/b.mov"))
     }
 
+    func testCopyPathsWritesToThePasteboard() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        try Data().write(to: directory.appendingPathComponent("b.mov"))
+
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("AppModelTests-\(UUID().uuidString)"))
+        let model = AppModel(
+            settings: AppSettings(defaults: defaults),
+            player: PlayerController(),
+            pasteboard: pasteboard,
+            restoreLastFolder: false
+        )
+        model.open(directory)
+
+        model.copyPaths(of: model.items)
+
+        XCTAssertEqual(pasteboard.string(forType: .string), model.items.map(\.url.path).joined(separator: "\n"))
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),

@@ -9,6 +9,7 @@ final class AppModel {
     private let watcher = DirectoryWatcher()
     private let trimService: TrimServicing
     private let tagService = FinderTagService()
+    private let pasteboard: NSPasteboard
     let favorites: FavoritesStore
     let player: PlayerController
 
@@ -46,6 +47,7 @@ final class AppModel {
         player: PlayerController? = nil,
         trimService: TrimServicing = TrimService(),
         favorites: FavoritesStore = FavoritesStore(),
+        pasteboard: NSPasteboard = .general,
         restoreLastFolder: Bool = true
     ) {
         self.loader = loader
@@ -53,6 +55,7 @@ final class AppModel {
         self.player = player ?? PlayerController(player: PlayerFactory.make())
         self.trimService = trimService
         self.favorites = favorites
+        self.pasteboard = pasteboard
         sortProperty = settings.sortProperty
         sortAscending = settings.sortAscending
 
@@ -196,6 +199,19 @@ final class AppModel {
             }
         }
         return true
+    }
+
+    // MARK: - Finder integration
+
+    func revealInFinder(_ items: [FileItem]) {
+        guard !items.isEmpty else { return }
+        NSWorkspace.shared.activateFileViewerSelecting(items.map(\.url))
+    }
+
+    func copyPaths(of items: [FileItem]) {
+        guard !items.isEmpty else { return }
+        pasteboard.clearContents()
+        pasteboard.setString(items.map(\.url.path).joined(separator: "\n"), forType: .string)
     }
 
     // MARK: - Tags

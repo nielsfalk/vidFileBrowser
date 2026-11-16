@@ -138,6 +138,14 @@ struct PlayerView: View {
                     model.rename(item, to: name)
                 }
             }
+
+            Button("Reveal in Finder") {
+                model.revealInFinder([item])
+            }
+
+            Button("Copy Path") {
+                model.copyPaths(of: [item])
+            }
         }
 
         Divider()

@@ -79,6 +79,14 @@ struct FileBrowserView: View {
             }
         })
 
+        menu.addItem(.separator())
+        menu.addItem(ClosureMenuItem(title: "Reveal in Finder") { [model] in
+            model.revealInFinder([item])
+        })
+        menu.addItem(ClosureMenuItem(title: "Copy Path") { [model] in
+            model.copyPaths(of: [item])
+        })
+
         let favorites = model.favorites.folders.compactMap { folder -> (FavoriteFolder, URL)? in
             guard let url = model.favorites.url(for: folder) else { return nil }
             return (folder, url)
