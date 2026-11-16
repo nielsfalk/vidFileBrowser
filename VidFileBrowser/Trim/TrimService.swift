@@ -117,9 +117,11 @@ final class TrimService {
 
         try trim(input: url, range: range, output: temp)
 
+        let metadata = FileMetadata.capture(at: url)
         let trashed = try trash.trash(url)
         do {
             try FileManager.default.moveItem(at: temp, to: url)
+            metadata.apply(to: url)
         } catch {
             if let trashed {
                 try? FileManager.default.moveItem(at: trashed, to: url)

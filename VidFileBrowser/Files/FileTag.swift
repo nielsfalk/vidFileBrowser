@@ -34,4 +34,10 @@ struct FileTag: Hashable, Sendable {
             .compactMap(TagColor.init(rawValue:))
             .first
     }
+
+    /// The value Finder stores in `com.apple.metadata:_kMDItemUserTags`.
+    var storedValue: String {
+        guard let color else { return name }
+        return "\(name)\n\(color.rawValue)"
+    }
 }

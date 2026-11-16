@@ -18,6 +18,25 @@ enum FinderTags {
         return rawValues.map(FileTag.init(rawValue:))
     }
 
+    static func setTags(_ tags: [FileTag], for url: URL) throws {
+        guard !tags.isEmpty else {
+            removeTags(for: url)
+            return
+        }
+
+        let values = tags.map(\.storedValue)
+        let data = try PropertyListSerialization.data(
+            fromPropertyList: values,
+            format: .binary,
+            options: 0
+        )
+        try writeAttribute(named: attributeName, data: data, at: url)
+    }
+
+    static func removeTags(for url: URL) {
+        removexattr(url.path, attributeName, 0)
+    }
+
     private static func readAttribute(named name: String, at url: URL) -> Data? {
         let path = url.path
         let length = getxattr(path, name, nil, 0, 0, 0)
@@ -29,5 +48,14 @@ enum FinderTags {
         }
         guard result == length else { return nil }
         return data
+    }
+
+    private static func writeAttribute(named name: String, data: Data, at url: URL) throws {
+        let result = data.withUnsafeBytes { buffer in
+            setxattr(url.path, name, buffer.baseAddress, buffer.count, 0, 0)
+        }
+        guard result == 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+        }
     }
 }
