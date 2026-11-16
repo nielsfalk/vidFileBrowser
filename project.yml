@@ -35,10 +35,27 @@ targets:
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         COMBINE_HIDPI_IMAGES: YES
 
+  VidFileBrowserTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - VidFileBrowserTests
+    dependencies:
+      - target: VidFileBrowser
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.nielsfalk.VidFileBrowserTests
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   VidFileBrowser:
     build:
       targets:
         VidFileBrowser: all
+        VidFileBrowserTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - VidFileBrowserTests
