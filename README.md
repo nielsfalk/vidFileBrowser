@@ -8,6 +8,23 @@ VidFileBrowser is a macOS application that combines a file browser with a video 
 - Distributed through the Mac App Store (sandboxed)
 - Because of the sandbox, the user must grant access to folders (via an open dialog or by dropping a folder onto the app). Granted folders are remembered across launches.
 
+## Tech stack
+
+**Recommended: Swift + SwiftUI, with AppKit where needed, and AVFoundation.**
+
+- **SwiftUI** for the window layout, controls and settings.
+- **AppKit** for the parts SwiftUI handles poorly on macOS: the file list (`NSTableView`), context menus (`NSMenu`) that can be opened and navigated from the keyboard, drag and drop, and the responder chain in fullscreen.
+- **AVFoundation / AVKit** for playback, seeking and lossless, keyframe-snapped trimming (`AVAssetExportSession` with passthrough). Hardware-accelerated and native.
+- **Finder integration** through system APIs: tags and label colors via `URLResourceValues` (`tagNames`, `labelNumber`), drag and drop, copy/cut/paste via `NSPasteboard` and `NSItemProvider`.
+- **Sandboxed App Store build**: folder access through security-scoped bookmarks so granted folders survive relaunches.
+
+Fallbacks, if needed later:
+
+- **MKV, WebM, AVI support:** keep AVPlayer for MP4/MOV and add **libmpv or VLCKit** as a fallback player, with bundled **ffmpeg** for trimming those formats. This increases app size and licensing/compliance work.
+- **Maximum control** over menus, table dragging and fullscreen: use **pure AppKit** instead of SwiftUI.
+
+Not recommended: **Electron, Tauri, Flutter and Compose Desktop**. Each requires native bridging for Finder tags, drag and drop, sandbox bookmarks and drawing the progress bar over video, while giving a less native feel and (except Tauri) a much larger footprint.
+
 ## Window layout
 
 ```
