@@ -4,26 +4,40 @@ VidFileBrowser is a macOS application that combines a file browser with a video 
 
 ## Platform
 
-- macOS 14 (Sonoma) or later
-- Distributed through the Mac App Store (sandboxed)
-- Because of the sandbox, the user must grant access to folders (via an open dialog or by dropping a folder onto the app). Granted folders are remembered across launches.
+- macOS 14 (Sonoma) or later, Apple Silicon and Intel
+- Distributed directly as a notarized DMG (hardened runtime, no App Sandbox). It is **not** distributed through the Mac App Store, because it depends on separately installed tools.
+- Requires [Homebrew](https://brew.sh) packages for playback and trimming:
+  ```
+  brew install mpv ffmpeg
+  ```
+- On launch, the app looks for `libmpv` and `ffmpeg` in `/opt/homebrew` (Apple Silicon) and `/usr/local` (Intel). If they are missing, it shows a message with the install command.
+- Without the sandbox, any folder can be opened directly. macOS still asks for permission once when the app first opens protected locations (Desktop, Documents, Downloads, external and network volumes).
 
 ## Tech stack
 
-**Recommended: Swift + SwiftUI, with AppKit where needed, and AVFoundation.**
+**Swift + SwiftUI/AppKit for the UI, libmpv for playback, ffmpeg for trimming.**
+
+This is the same approach as the [IINA](https://iina.io) player. The app can play every format mpv and ffmpeg support, which is about the same as VLC (MP4, MOV, MKV, WebM, AVI, FLV, WMV, H.264, HEVC, VP9, AV1, DTS, …).
 
 - **SwiftUI** for the window layout, controls and settings.
 - **AppKit** for the parts SwiftUI handles poorly on macOS: the file list (`NSTableView`), context menus (`NSMenu`) that can be opened and navigated from the keyboard, drag and drop, and the responder chain in fullscreen.
-- **AVFoundation / AVKit** for playback, seeking and lossless, keyframe-snapped trimming (`AVAssetExportSession` with passthrough). Hardware-accelerated and native.
+- **libmpv** (from Homebrew `mpv`) for video playback and seeking.
+  - All playback goes through a small `Player` protocol (`load`, `play`, `pause`, `seek`, `position`, `duration`, end-of-file event), so the UI does not depend on mpv. Another player (AVPlayer, VLCKit) can be added later behind the same protocol.
+  - mpv draws into its own embedded view (`wid`) instead of the OpenGL render API. mpv can then render with OpenGL or with Vulkan through MoltenVK (Metal), which protects the app against Apple eventually removing the deprecated OpenGL.
+  - The progress bar is a separate overlay view on top of the mpv view.
+- **ffmpeg** (from Homebrew) for lossless trimming of any format: `ffmpeg -ss <start> -to <end> -i in -map 0 -c copy -avoid_negative_ts make_zero out`. `ffprobe` finds the keyframe the cut snaps to.
+- **ImageIO / NSImage** for images (JPEG, PNG, HEIC, …) with zoom and pan.
 - **Finder integration** through system APIs: tags and label colors via `URLResourceValues` (`tagNames`, `labelNumber`), drag and drop, copy/cut/paste via `NSPasteboard` and `NSItemProvider`.
-- **Sandboxed App Store build**: folder access through security-scoped bookmarks so granted folders survive relaunches.
+- **Signing:** hardened runtime with the `com.apple.security.cs.disable-library-validation` entitlement, so the app can load `libmpv` from Homebrew. The app is notarized for distribution.
 
-Fallbacks, if needed later:
+Licensing: the Homebrew `mpv` build is GPL. If the app is distributed, it should either be open source under the GPL or use an LGPL build of mpv.
 
-- **MKV, WebM, AVI support:** keep AVPlayer for MP4/MOV and add **libmpv or VLCKit** as a fallback player, with bundled **ffmpeg** for trimming those formats. This increases app size and licensing/compliance work.
-- **Maximum control** over menus, table dragging and fullscreen: use **pure AppKit** instead of SwiftUI.
+Alternatives, if requirements change:
 
-Not recommended: **Electron, Tauri, Flutter and Compose Desktop**. Each requires native bridging for Finder tags, drag and drop, sandbox bookmarks and drawing the progress bar over video, while giving a less native feel and (except Tauri) a much larger footprint.
+- **Back to the Mac App Store:** replace libmpv with **VLCKit** (it includes its own decoders) and bundle an **LGPL ffmpeg** build, sandboxed.
+- **Better HDR / lower power use for common files:** add **AVPlayer** for MP4/MOV behind the `Player` protocol and keep mpv for everything else.
+
+Not recommended: **Electron, Tauri, Flutter and Compose Desktop**. Each requires native bridging for Finder tags, drag and drop and drawing the progress bar over video, and none can play all formats without the same mpv/VLC integration work.
 
 ## Window layout
 
@@ -81,6 +95,7 @@ The player sits on the right side of the window and shows the file selected in t
 
 ### Videos
 
+- Every video format supported by mpv/ffmpeg can be played.
 - A newly selected video starts playing automatically.
 - When a video ends, playback stops on the last frame.
 - A clickable progress bar at the bottom of the player shows the current position. Clicking it jumps to that position.
@@ -100,7 +115,7 @@ Trimming removes part of the current video, relative to the current playback pos
 
 Behavior:
 
-- Trimming is lossless (no re-encoding), so it is fast and keeps the original quality. The cut point snaps to the nearest keyframe, so it can be slightly off from the exact playback position.
+- Trimming is lossless (no re-encoding, done with ffmpeg), so it is fast and keeps the original quality and container format. It works for every format ffmpeg can read. The cut point snaps to the nearest keyframe, so it can be slightly off from the exact playback position.
 - The trimmed video replaces the original file under the same name.
 - The original file is moved to the Trash, so it can be restored from there. There is no in-app undo.
 - Finder tags and the file's creation date are kept on the trimmed file.
@@ -167,14 +182,15 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 - [x] T01 Write the feature specification in this README
 - [x] T02 Choose the tech stack
-- [ ] T03 Create the Xcode project: SwiftUI app, macOS 14 deployment target, App Sandbox enabled
+- [ ] T03 Create the Xcode project: SwiftUI app, macOS 14 deployment target, hardened runtime, no App Sandbox
 - [ ] T04 Add git hooks (`commit-msg`, `pre-push`) that enforce the commit rules, plus an `installHooks` task
 - [ ] T05 Add a unit test target and a command-line build and test command (`xcodebuild test`)
+- [ ] T51 Dependency check on launch: find `libmpv` and `ffmpeg` in `/opt/homebrew` and `/usr/local`, show the install command if missing
 
 ### Window and folder access
 
 - [ ] T06 Main window layout: breadcrumb on top, resizable split view with file browser left and player right
-- [ ] T07 Folder access: open dialog to grant a folder, store it as a security-scoped bookmark, restore access on launch
+- [ ] T07 Open a folder via an open dialog or by dropping a folder onto the app
 - [ ] T08 Remember the last folder, window frame and divider position across launches
 
 ### Breadcrumb path
@@ -195,17 +211,19 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 ### Player
 
-- [ ] T19 Play the selected video with AVPlayer, starting automatically on selection
+- [ ] T52 `Player` protocol: load, play, pause, seek, position, duration and end-of-file event
+- [ ] T53 libmpv integration: link `libmpv` from Homebrew and embed mpv's video view in the player area
+- [ ] T19 Play the selected video with the mpv player, starting automatically on selection
 - [ ] T20 Stop on the last frame when a video ends
-- [ ] T21 Clickable progress bar at the bottom that shows the position and seeks on click
+- [ ] T21 Clickable progress bar overlaid on the mpv view that shows the position and seeks on click
 - [ ] T22 Hide the progress bar after mouse inactivity, show it again on mouse movement
-- [ ] T23 Show the selected image fitted to the player area
+- [ ] T23 Show the selected image (ImageIO / NSImage) fitted to the player area
 - [ ] T24 Zoom (pinch, scroll wheel with modifier) and pan (drag) for images
 - [ ] T25 Playback shortcuts: Space play/pause, Left/Right skip 10 s, `,`/`.` skip 30 s
 
 ### Trimming
 
-- [ ] T26 Trim service: lossless, keyframe-snapped export of a time range (`AVAssetExportSession` passthrough)
+- [ ] T26 Trim service: lossless, keyframe-snapped cut with ffmpeg (`-c copy`), keyframe lookup with `ffprobe`
 - [ ] T27 Replace the original: write to a temp file, move the original to the Trash, move the trimmed file into place
 - [ ] T28 Keep Finder tags and creation date on the trimmed file
 - [ ] T29 Trim left (`n`) and trim right (`m`) at the current position, then reload the player
@@ -218,7 +236,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 ### Favorite folders
 
-- [ ] T33 Settings window: add, remove and reorder favorite folders (stored as security-scoped bookmarks)
+- [ ] T33 Settings window: add, remove and reorder favorite folders (stored as bookmarks so they survive renames and moves)
 - [ ] T34 Move a file into a favorite folder
 
 ### Context menu
@@ -247,4 +265,4 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 ### Release
 
 - [ ] T49 App icon and app metadata
-- [ ] T50 Signing, App Store build and submission
+- [ ] T50 Signing (hardened runtime, `disable-library-validation`), notarization and DMG build
