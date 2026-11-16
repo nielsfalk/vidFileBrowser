@@ -194,6 +194,39 @@ final class AppModel {
         }
     }
 
+    /// Copies files dropped from Finder into the current folder.
+    @discardableResult
+    func importFiles(_ urls: [URL]) -> Bool {
+        guard let directory else { return false }
+
+        let files = urls.filter { url in
+            var isDirectory: ObjCBool = false
+            let exists = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+            return exists && !isDirectory.boolValue
+        }
+        guard !files.isEmpty else { return false }
+
+        applyToAllResolution = nil
+        defer { applyToAllResolution = nil }
+
+        do {
+            try fileOperationService.perform(
+                .copy,
+                sources: files,
+                into: directory,
+                resolve: resolveConflict(_:)
+            )
+            errorMessage = nil
+            reload()
+            return true
+        } catch is CancellationError {
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
     private func resolveConflict(_ conflict: FileConflict) -> ConflictResolution {
         if let conflictResolver {
             return conflictResolver(conflict)

@@ -263,6 +263,21 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(player.currentURL, model.items.first?.url)
     }
 
+    func testImportFilesCopiesThemIntoTheFolder() throws {
+        let source = directory.deletingLastPathComponent()
+            .appendingPathComponent("ImportSource-\(UUID().uuidString).mov")
+        try Data("data".utf8).write(to: source)
+        defer { try? FileManager.default.removeItem(at: source) }
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+
+        XCTAssertTrue(model.importFiles([source]))
+
+        XCTAssertNotNil(model.items.first { $0.name == source.lastPathComponent })
+        XCTAssertTrue(FileManager.default.fileExists(atPath: source.path))
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),

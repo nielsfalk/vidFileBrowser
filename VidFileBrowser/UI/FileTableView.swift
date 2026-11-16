@@ -8,6 +8,7 @@ struct FileTableView: NSViewRepresentable {
     var onActivate: ((FileItem) -> Void)? = nil
     var buildContextMenu: ((FileItem, NSMenu) -> Void)? = nil
     var buildMoveToMenu: ((FileItem, NSMenu) -> Void)? = nil
+    var onDropFiles: (([URL]) -> Bool)? = nil
 
     private static let nameColumnID = NSUserInterfaceItemIdentifier("name")
     private static let valueColumnID = NSUserInterfaceItemIdentifier("value")
@@ -31,6 +32,9 @@ struct FileTableView: NSViewRepresentable {
         }
         table.onShowMoveToMenu = { [weak coordinator = context.coordinator] in
             coordinator?.showMoveToMenu()
+        }
+        table.onDropFiles = { [weak coordinator = context.coordinator] urls in
+            coordinator?.parent.onDropFiles?(urls) ?? false
         }
         table.allowsMultipleSelection = false
         table.usesAlternatingRowBackgroundColors = true
@@ -266,6 +270,42 @@ private final class FileTable: NSTableView {
     var onActivateRow: ((Int) -> Void)?
     var onShowContextMenu: (() -> Void)?
     var onShowMoveToMenu: (() -> Void)?
+    var onDropFiles: (([URL]) -> Bool)?
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        registerForDraggedTypes([.fileURL])
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        droppedFiles(from: sender).isEmpty ? [] : .copy
+    }
+
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        draggingEntered(sender)
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let urls = droppedFiles(from: sender)
+        guard !urls.isEmpty else { return false }
+        return onDropFiles?(urls) ?? false
+    }
+
+    private func droppedFiles(from sender: NSDraggingInfo) -> [URL] {
+        let urls = sender.draggingPasteboard.readObjects(
+            forClasses: [NSURL.self],
+            options: [.urlReadingFileURLsOnly: true]
+        ) as? [URL] ?? []
+        return urls.filter { url in
+            var isDirectory: ObjCBool = false
+            let exists = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+            return exists && !isDirectory.boolValue
+        }
+    }
 
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)

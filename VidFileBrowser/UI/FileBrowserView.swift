@@ -19,7 +19,8 @@ struct FileBrowserView: View {
                 selection: $model.selection,
                 onActivate: model.activate,
                 buildContextMenu: makeContextMenu,
-                buildMoveToMenu: makeMoveToMenu
+                buildMoveToMenu: makeMoveToMenu,
+                onDropFiles: model.importFiles
             )
 
             Divider()
