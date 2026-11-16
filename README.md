@@ -248,7 +248,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T53 libmpv integration: link `libmpv` from Homebrew and embed mpv's video view in the player area
 - [x] T19 Play the selected video with the mpv player, starting automatically on selection
 - [x] T20 Stop on the last frame when a video ends
-- [ ] T21 Clickable progress bar overlaid on the mpv view that shows the position and seeks on click
+- [x] T21 Clickable progress bar overlaid on the mpv view that shows the position and seeks on click
 - [ ] T22 Hide the progress bar after mouse inactivity, show it again on mouse movement
 - [ ] T23 Show the selected image (ImageIO / NSImage) fitted to the player area
 - [ ] T24 Zoom (pinch, scroll wheel with modifier) and pan (drag) for images

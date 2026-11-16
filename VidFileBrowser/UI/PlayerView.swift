@@ -20,12 +20,23 @@ struct PlayerView: View {
                         .padding(.horizontal, 32)
                 }
             }
+
+            if showsControls {
+                VStack {
+                    Spacer()
+                    PlayerControlsView(player: player)
+                }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
         .onAppear {
             model.selectionDidChange()
         }
+    }
+
+    private var showsControls: Bool {
+        player.duration > 0 && player.state != .idle
     }
 
     private var message: String? {
