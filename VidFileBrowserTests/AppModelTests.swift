@@ -65,6 +65,23 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(player.currentURL, item.url)
     }
 
+    func testSelectingAnImageShowsIt() throws {
+        let imageURL = directory.appendingPathComponent("photo.png")
+        try TestImage.pngData(width: 4, height: 4).write(to: imageURL)
+
+        let player = PlayerController()
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: player, restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first { $0.name == "photo.png" })
+        model.selection = [item.id]
+
+        model.selectionDidChange()
+
+        XCTAssertNotNil(model.image)
+        XCTAssertEqual(model.imageURL, item.url)
+        XCTAssertNil(player.currentURL)
+    }
+
     func testSelectingANonPlayableFileStopsPlayback() throws {
         let textURL = directory.appendingPathComponent("notes.txt")
         try Data().write(to: textURL)

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 
@@ -11,6 +12,8 @@ final class AppModel {
     private(set) var directory: URL?
     private(set) var items: [FileItem] = []
     private(set) var errorMessage: String?
+    private(set) var image: NSImage?
+    private(set) var imageURL: URL?
     var selection: Set<FileItem.ID> = []
 
     var sortProperty: SortProperty {
@@ -95,12 +98,31 @@ final class AppModel {
     }
 
     func playSelectedItem() {
-        guard let item = selectedItem, !item.isDirectory, item.kind == .video else {
-            player.stop()
+        guard let item = selectedItem, !item.isDirectory else {
+            clearMedia()
             return
         }
-        guard player.currentURL != item.url else { return }
-        player.load(item.url, autoplay: true)
+
+        switch item.kind {
+        case .video:
+            image = nil
+            imageURL = nil
+            guard player.currentURL != item.url else { return }
+            player.load(item.url, autoplay: true)
+        case .image:
+            player.stop()
+            guard imageURL != item.url else { return }
+            imageURL = item.url
+            image = ImageLoader.image(at: item.url)
+        case .other:
+            clearMedia()
+        }
+    }
+
+    private func clearMedia() {
+        player.stop()
+        image = nil
+        imageURL = nil
     }
 
     private func resort() {

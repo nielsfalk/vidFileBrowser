@@ -12,6 +12,10 @@ struct PlayerView: View {
         ZStack {
             MPVVideoView(controller: player)
 
+            if let image = model.image {
+                ImageCanvas(image: image)
+            }
+
             if let message {
                 VStack(spacing: 10) {
                     Image(systemName: "play.rectangle")
