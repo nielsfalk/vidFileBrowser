@@ -1,0 +1,44 @@
+name: VidFileBrowser
+
+options:
+  bundleIdPrefix: de.nielsfalk
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    # Xcode disables the hardened runtime for ad-hoc signing, so this only takes
+    # effect once a Developer ID identity is set up for notarization (T50).
+    ENABLE_HARDENED_RUNTIME: YES
+    ENABLE_APP_SANDBOX: NO
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+
+targets:
+  VidFileBrowser:
+    type: application
+    platform: macOS
+    sources:
+      - VidFileBrowser
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.nielsfalk.VidFileBrowser
+        PRODUCT_NAME: VidFileBrowser
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.video
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        COMBINE_HIDPI_IMAGES: YES
+
+schemes:
+  VidFileBrowser:
+    build:
+      targets:
+        VidFileBrowser: all
+    run:
+      config: Debug

@@ -174,6 +174,23 @@ After the current file is moved or trashed, the **next** file in the list is sel
 
 While a menu opened with `y` or `x` is visible, Up/Down moves through the menu entries, Enter runs the selected entry and `Esc` closes the menu.
 
+## Development
+
+Requirements:
+
+- Xcode 27 or later
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
+- The runtime dependencies from [Platform](#platform): `brew install mpv ffmpeg`
+
+The Xcode project is generated from `project.yml` and is not checked in. On a fresh checkout run `make generate` once.
+
+```
+make generate   # create VidFileBrowser.xcodeproj
+make build      # generate and build (Debug)
+make run        # build and open the app
+make clean      # remove the build output and the generated project
+```
+
 ## Tasks
 
 Every commit references one of these task numbers (see `agents.md`). A checked task is done; it can be unchecked again if its scope changes.
@@ -182,7 +199,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 - [x] T01 Write the feature specification in this README
 - [x] T02 Choose the tech stack
-- [ ] T03 Create the Xcode project: SwiftUI app, macOS 14 deployment target, hardened runtime, no App Sandbox
+- [x] T03 Create the Xcode project: SwiftUI app, macOS 14 deployment target, hardened runtime, no App Sandbox
 - [ ] T04 Add git hooks (`commit-msg`, `pre-push`) that enforce the commit rules, plus an `installHooks` task
 - [ ] T05 Add a unit test target and a command-line build and test command (`xcodebuild test`)
 - [ ] T51 Dependency check on launch: find `libmpv` and `ffmpeg` in `/opt/homebrew` and `/usr/local`, show the install command if missing
