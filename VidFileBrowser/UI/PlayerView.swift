@@ -3,6 +3,9 @@ import SwiftUI
 struct PlayerView: View {
     let model: AppModel
 
+    @State private var controlsVisible = true
+    @State private var hideTask: Task<Void, Never>?
+
     private var player: PlayerController { model.player }
 
     var body: some View {
@@ -26,6 +29,7 @@ struct PlayerView: View {
                     Spacer()
                     PlayerControlsView(player: player)
                 }
+                .transition(.opacity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -33,10 +37,31 @@ struct PlayerView: View {
         .onAppear {
             model.selectionDidChange()
         }
+        .onDisappear {
+            hideTask?.cancel()
+        }
+        .onContinuousHover { phase in
+            switch phase {
+            case .active:
+                revealControls()
+                scheduleHide()
+            case .ended:
+                hideTask?.cancel()
+            }
+        }
+        .onChange(of: player.state) { _, state in
+            if state == .playing {
+                scheduleHide()
+            } else {
+                revealControls()
+                hideTask?.cancel()
+            }
+        }
     }
 
     private var showsControls: Bool {
-        player.duration > 0 && player.state != .idle
+        guard player.duration > 0, player.state != .idle else { return false }
+        return controlsVisible || player.state == .paused || player.state == .ended
     }
 
     private var message: String? {
@@ -52,6 +77,27 @@ struct PlayerView: View {
             return "No file selected"
         default:
             return nil
+        }
+    }
+
+    private func revealControls() {
+        withAnimation(.easeInOut(duration: 0.15)) {
+            controlsVisible = true
+        }
+    }
+
+    private func scheduleHide() {
+        guard player.state == .playing else { return }
+        hideTask?.cancel()
+
+        hideTask = Task {
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    controlsVisible = false
+                }
+            }
         }
     }
 }
