@@ -52,6 +52,10 @@ final class ImageCanvasView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
+        if event.clickCount == 2 {
+            window?.toggleFullScreen(nil)
+            return
+        }
         window?.makeFirstResponder(self)
     }
 

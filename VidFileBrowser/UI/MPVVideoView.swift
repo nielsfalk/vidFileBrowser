@@ -32,6 +32,14 @@ final class MPVOpenGLView: NSOpenGLView {
         true
     }
 
+    override func mouseDown(with event: NSEvent) {
+        if event.clickCount == 2 {
+            window?.toggleFullScreen(nil)
+            return
+        }
+        super.mouseDown(with: event)
+    }
+
     override func prepareOpenGL() {
         super.prepareOpenGL()
         openGLContext?.makeCurrentContext()

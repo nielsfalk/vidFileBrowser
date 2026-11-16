@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct PlaybackCommands: Commands {
@@ -47,7 +48,27 @@ struct PlaybackCommands: Commands {
                 }
             }
             .keyboardShortcut("m", modifiers: [])
+
+            Divider()
+
+            Button("Toggle Full Screen", action: toggleFullScreen)
+                .keyboardShortcut("f", modifiers: [])
+
+            Button("Exit Full Screen") {
+                if isFullScreen {
+                    toggleFullScreen()
+                }
+            }
+            .keyboardShortcut(.escape, modifiers: [])
         }
+    }
+
+    private func toggleFullScreen() {
+        NSApp.keyWindow?.toggleFullScreen(nil)
+    }
+
+    private var isFullScreen: Bool {
+        NSApp.keyWindow?.styleMask.contains(.fullScreen) ?? false
     }
 
     private func togglePlayPause() {
