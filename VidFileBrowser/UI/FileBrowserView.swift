@@ -18,6 +18,7 @@ struct FileBrowserView: View {
                 sortProperty: model.sortProperty,
                 selection: $model.selection,
                 onActivate: model.activate,
+                onRename: renameItem,
                 buildContextMenu: makeContextMenu,
                 buildMoveToMenu: makeMoveToMenu,
                 onDropFiles: model.importFiles,
@@ -68,6 +69,16 @@ struct FileBrowserView: View {
             }
         default:
             model.handle(shortcut)
+        }
+    }
+
+    private func renameItem(_ item: FileItem) {
+        guard model.selectedItems.count == 1 else {
+            NSSound.beep()
+            return
+        }
+        if let name = RenamePrompt.run(currentName: item.name) {
+            model.rename(item, to: name)
         }
     }
 

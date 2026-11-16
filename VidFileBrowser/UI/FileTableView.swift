@@ -6,6 +6,7 @@ struct FileTableView: NSViewRepresentable {
     let sortProperty: SortProperty
     @Binding var selection: Set<FileItem.ID>
     var onActivate: ((FileItem) -> Void)? = nil
+    var onRename: ((FileItem) -> Void)? = nil
     var buildContextMenu: ((FileItem, NSMenu) -> Void)? = nil
     var buildMoveToMenu: ((FileItem, NSMenu) -> Void)? = nil
     var onDropFiles: (([URL]) -> Bool)? = nil
@@ -30,6 +31,9 @@ struct FileTableView: NSViewRepresentable {
         table.doubleAction = #selector(Coordinator.activateClickedRow(_:))
         table.onActivateRow = { [weak coordinator = context.coordinator] row in
             coordinator?.activate(row: row)
+        }
+        table.onRenameRow = { [weak coordinator = context.coordinator] row in
+            coordinator?.rename(row: row)
         }
         table.onShowContextMenu = { [weak coordinator = context.coordinator] in
             coordinator?.showContextMenu()
@@ -164,6 +168,14 @@ struct FileTableView: NSViewRepresentable {
             parent.onActivate?(items[row])
         }
 
+        func rename(row: Int) {
+            guard items.indices.contains(row) else {
+                NSSound.beep()
+                return
+            }
+            parent.onRename?(items[row])
+        }
+
         @objc func activateClickedRow(_ sender: Any?) {
             guard let table = sender as? NSTableView else { return }
             let row = table.clickedRow >= 0 ? table.clickedRow : table.selectedRow
@@ -288,6 +300,7 @@ struct FileTableView: NSViewRepresentable {
 
 private final class FileTable: NSTableView {
     var onActivateRow: ((Int) -> Void)?
+    var onRenameRow: ((Int) -> Void)?
     var onShowContextMenu: (() -> Void)?
     var onShowMoveToMenu: (() -> Void)?
     var onDropFiles: (([URL]) -> Bool)?
@@ -369,7 +382,7 @@ private final class FileTable: NSTableView {
         }
 
         if event.keyCode == 36 || event.keyCode == 76 {
-            onActivateRow?(selectedRow)
+            onRenameRow?(selectedRow)
             return
         }
         super.keyDown(with: event)

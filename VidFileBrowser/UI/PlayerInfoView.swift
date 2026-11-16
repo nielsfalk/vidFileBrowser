@@ -34,7 +34,8 @@ struct ShortcutList: View {
         (", / .", "Skip 30 seconds"),
         ("n / m", "Trim left / right at the playhead"),
         ("↑ / ↓", "Previous / next file"),
-        ("Enter", "Open folder"),
+        ("Enter", "Rename file"),
+        ("Double-click", "Open folder"),
         ("y / x", "Context menu / Move to menu"),
         ("⌘C / ⌘X / ⌘V", "Copy / cut / paste files"),
         ("f / Esc", "Full screen on / off")
