@@ -275,7 +275,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 ### Context menu
 
 - [x] T35 Context menu on right-click in the file browser and the player
-- [ ] T36 Move to submenu with the favorite folders
+- [x] T36 Move to submenu with the favorite folders
 - [ ] T37 Rename action
 - [ ] T38 Reveal in Finder and Copy path actions
 - [ ] T39 Move to Trash action

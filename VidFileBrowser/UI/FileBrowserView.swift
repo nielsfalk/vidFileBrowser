@@ -79,12 +79,15 @@ struct FileBrowserView: View {
         }
 
         if !favorites.isEmpty {
-            menu.addItem(.separator())
+            let moveToItem = NSMenuItem(title: "Move to", action: nil, keyEquivalent: "")
+            let moveToMenu = NSMenu()
             for (folder, url) in favorites {
-                menu.addItem(ClosureMenuItem(title: "Move to \(folder.name)") { [model] in
+                moveToMenu.addItem(ClosureMenuItem(title: folder.name) { [model] in
                     model.move(item, to: url)
                 })
             }
+            moveToItem.submenu = moveToMenu
+            menu.addItem(moveToItem)
         }
     }
 }

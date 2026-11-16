@@ -120,6 +120,18 @@ struct PlayerView: View {
                     model.removeAllTags(from: item)
                 }
             }
+
+            if !model.favorites.folders.isEmpty {
+                Menu("Move to") {
+                    ForEach(model.favorites.folders) { folder in
+                        if let url = model.favorites.url(for: folder) {
+                            Button(folder.name) {
+                                model.move(item, to: url)
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         Divider()
