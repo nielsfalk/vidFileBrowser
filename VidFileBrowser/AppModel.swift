@@ -5,6 +5,7 @@ import Observation
 final class AppModel {
     private let loader: DirectoryLoader
     private let settings: AppSettings
+    private let watcher = DirectoryWatcher()
 
     private(set) var directory: URL?
     private(set) var items: [FileItem] = []
@@ -48,6 +49,9 @@ final class AppModel {
         directory = url
         selection = []
         reload()
+        watcher.watch(url) { [weak self] in
+            self?.reload()
+        }
     }
 
     func reload() {
@@ -76,5 +80,7 @@ final class AppModel {
 
     private func resort() {
         items = FileSorter.sorted(allItems, by: sortProperty, ascending: sortAscending)
+        let visible = Set(items.map(\.id))
+        selection = selection.intersection(visible)
     }
 }
