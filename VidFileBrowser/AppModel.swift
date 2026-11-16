@@ -122,6 +122,14 @@ final class AppModel {
         playSelectedItem()
     }
 
+    func selectPrevious() {
+        moveSelection(by: -1)
+    }
+
+    func selectNext() {
+        moveSelection(by: 1)
+    }
+
     /// Handles playback keys that are also useful while the file browser is
     /// hidden in full screen.
     func handle(_ shortcut: BrowserShortcut) {
@@ -145,6 +153,18 @@ final class AppModel {
         case .toggleFullScreen, .exitFullScreen:
             break
         }
+    }
+
+    private func moveSelection(by offset: Int) {
+        guard !items.isEmpty else { return }
+
+        let currentIndex = selectedItem.flatMap { item in
+            items.firstIndex { $0.id == item.id }
+        } ?? -1
+        let nextIndex = min(max(currentIndex + offset, 0), items.count - 1)
+
+        selection = [items[nextIndex].id]
+        selectionDidChange()
     }
 
     func playSelectedItem() {

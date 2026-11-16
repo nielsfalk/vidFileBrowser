@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var model: AppModel
     @State private var browserWidth: CGFloat
     @State private var isDropTarget = false
+    @State private var isFullScreen = false
 
     init(model: AppModel? = nil, dependencies: Dependencies = DependencyLocator.locate(), settings: AppSettings = AppSettings()) {
         self.dependencies = dependencies
@@ -19,20 +20,29 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if !dependencies.isSatisfied {
-                dependencyBanner
+            if !isFullScreen {
+                if !dependencies.isSatisfied {
+                    dependencyBanner
+                }
+                breadcrumbBar
+                Divider()
             }
-            breadcrumbBar
-            Divider()
             HStack(spacing: 0) {
-                FileBrowserView(model: model)
-                    .frame(width: browserWidth)
-                SplitHandle(width: $browserWidth, range: 260...800)
+                if !isFullScreen {
+                    FileBrowserView(model: model)
+                        .frame(width: browserWidth)
+                    SplitHandle(width: $browserWidth, range: 260...800)
+                }
                 PlayerView(model: model)
             }
         }
         .frame(minWidth: 900, minHeight: 560)
-        .background(WindowConfigurator().frame(width: 0, height: 0))
+        .background(
+            WindowConfigurator { fullScreen in
+                isFullScreen = fullScreen
+            }
+            .frame(width: 0, height: 0)
+        )
         .onChange(of: browserWidth) { _, newWidth in
             settings.browserWidth = Double(newWidth)
         }
@@ -44,6 +54,16 @@ struct ContentView: View {
                 Rectangle()
                     .strokeBorder(Color.accentColor, lineWidth: 3)
                     .allowsHitTesting(false)
+            }
+        }
+        .overlay {
+            if isFullScreen {
+                FullScreenKeyView(
+                    onPrevious: model.selectPrevious,
+                    onNext: model.selectNext,
+                    onShortcut: handleShortcut
+                )
+                .allowsHitTesting(false)
             }
         }
         .onDrop(of: [UTType.fileURL], isTargeted: $isDropTarget) { providers in
@@ -67,6 +87,15 @@ struct ContentView: View {
             }
         } message: {
             Text(model.trimError ?? "")
+        }
+    }
+
+    private func handleShortcut(_ shortcut: BrowserShortcut) {
+        switch shortcut {
+        case .toggleFullScreen, .exitFullScreen:
+            NSApp.keyWindow?.toggleFullScreen(nil)
+        default:
+            model.handle(shortcut)
         }
     }
 

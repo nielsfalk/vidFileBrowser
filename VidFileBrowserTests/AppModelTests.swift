@@ -392,6 +392,25 @@ final class AppModelTests: XCTestCase {
         )
     }
 
+    func testSelectNextAndPrevious() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        try Data().write(to: directory.appendingPathComponent("b.mov"))
+        try Data().write(to: directory.appendingPathComponent("c.mov"))
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+
+        model.selectPrevious()
+        XCTAssertEqual(model.selectedItem?.name, "a.mov")
+
+        model.selectNext()
+        XCTAssertEqual(model.selectedItem?.name, "b.mov")
+
+        model.selectNext()
+        model.selectNext()
+        XCTAssertEqual(model.selectedItem?.name, "c.mov")
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),

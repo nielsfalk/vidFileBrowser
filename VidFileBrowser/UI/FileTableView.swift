@@ -89,6 +89,10 @@ struct FileTableView: NSViewRepresentable {
         scrollView.hasVerticalScroller = true
         scrollView.autohidesScrollers = true
         scrollView.drawsBackground = false
+
+        DispatchQueue.main.async {
+            table.window?.makeFirstResponder(table)
+        }
         return scrollView
     }
 
