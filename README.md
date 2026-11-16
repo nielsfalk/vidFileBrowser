@@ -256,7 +256,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 ### Trimming
 
-- [ ] T26 Trim service: lossless, keyframe-snapped cut with ffmpeg (`-c copy`), keyframe lookup with `ffprobe`
+- [x] T26 Trim service: lossless, keyframe-snapped cut with ffmpeg (`-c copy`), keyframe lookup with `ffprobe`
 - [ ] T27 Replace the original: write to a temp file, move the original to the Trash, move the trimmed file into place
 - [ ] T28 Keep Finder tags and creation date on the trimmed file
 - [ ] T29 Trim left (`n`) and trim right (`m`) at the current position, then reload the player

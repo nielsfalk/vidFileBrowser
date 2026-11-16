@@ -23,13 +23,23 @@ enum DependencyLocator {
         )
     }
 
+    static func ffmpegPath() -> String? {
+        ffmpeg(in: homebrewPrefixes)
+    }
+
+    static func ffprobePath() -> String? {
+        let candidates = homebrewPrefixes.map { "\($0)/bin/ffprobe" }
+            + ["/usr/bin/ffprobe", "/usr/local/bin/ffprobe"]
+        return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
+    }
+
     private static func libmpv(in prefixes: [String]) -> String? {
         prefixes
             .map { "\($0)/lib/libmpv.dylib" }
             .first { FileManager.default.fileExists(atPath: $0) }
     }
 
-    private static func ffmpeg(in prefixes: [String]) -> String? {
+    static func ffmpeg(in prefixes: [String]) -> String? {
         prefixes
             .map { "\($0)/bin/ffmpeg" }
             .first { FileManager.default.isExecutableFile(atPath: $0) }
