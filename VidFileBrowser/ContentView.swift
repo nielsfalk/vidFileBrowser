@@ -64,8 +64,16 @@ struct ContentView: View {
                         Image(systemName: "chevron.compact.right")
                             .foregroundStyle(.tertiary)
                     }
-                    Text(crumb.title)
-                        .lineLimit(1)
+                    Button {
+                        model.open(crumb.url)
+                    } label: {
+                        Text(crumb.title)
+                            .lineLimit(1)
+                            .foregroundStyle(index == breadcrumbs.count - 1 ? .primary : .secondary)
+                            .fontWeight(index == breadcrumbs.count - 1 ? .semibold : .regular)
+                    }
+                    .buttonStyle(.plain)
+                    .help(crumb.url.path)
                 }
             }
 

@@ -227,7 +227,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 ### Breadcrumb path
 
 - [x] T09 Show the current folder path as breadcrumb segments
-- [ ] T10 Clicking a breadcrumb segment opens that folder
+- [x] T10 Clicking a breadcrumb segment opens that folder
 
 ### File browser
 
