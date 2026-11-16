@@ -19,6 +19,12 @@ struct FileConflict: Equatable {
 
 /// Copies and moves files into a folder, asking the caller what to do when a
 /// destination already exists.
+struct FileOperationResult {
+    let source: URL
+    /// nil when the file was skipped.
+    let destination: URL?
+}
+
 struct FileOperationService {
     private let fileManager: FileManager
 
@@ -26,47 +32,54 @@ struct FileOperationService {
         self.fileManager = fileManager
     }
 
+    @discardableResult
     func perform(
         _ operation: FileOperation,
         sources: [URL],
         into folder: URL,
         resolve: (FileConflict) -> ConflictResolution
-    ) throws {
+    ) throws -> [FileOperationResult] {
+        var results: [FileOperationResult] = []
         for source in sources {
-            try perform(operation, source: source, into: folder, resolve: resolve)
+            results.append(try perform(operation, source: source, into: folder, resolve: resolve))
         }
+        return results
     }
 
+    @discardableResult
     func perform(
         _ operation: FileOperation,
         source: URL,
         into folder: URL,
         resolve: (FileConflict) -> ConflictResolution
-    ) throws {
-        var destination = folder.appendingPathComponent(source.lastPathComponent)
+    ) throws -> FileOperationResult {
+        let destination = folder.appendingPathComponent(source.lastPathComponent)
         if destination.standardizedFileURL == source.standardizedFileURL {
-            return
+            return FileOperationResult(source: source, destination: nil)
         }
 
-        if fileManager.fileExists(atPath: destination.path) {
-            switch resolve(FileConflict(source: source, destination: destination)) {
+        var target = destination
+        if fileManager.fileExists(atPath: target.path) {
+            switch resolve(FileConflict(source: source, destination: target)) {
             case .cancel:
                 throw CancellationError()
             case .skip:
-                return
+                return FileOperationResult(source: source, destination: nil)
             case .replace:
-                try fileManager.removeItem(at: destination)
+                try fileManager.removeItem(at: target)
             case .keepBoth:
-                destination = Self.uniqueDestination(for: destination, fileManager: fileManager)
+                target = Self.uniqueDestination(for: target, fileManager: fileManager)
             }
         }
 
         switch operation {
         case .copy:
-            try fileManager.copyItem(at: source, to: destination)
+            try fileManager.copyItem(at: source, to: target)
         case .move:
-            try fileManager.moveItem(at: source, to: destination)
+            try fileManager.moveItem(at: source, to: target)
         }
+
+        return FileOperationResult(source: source, destination: target)
     }
 
     static func uniqueDestination(for url: URL, fileManager: FileManager = .default) -> URL {

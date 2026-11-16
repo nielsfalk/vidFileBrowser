@@ -11,6 +11,9 @@ final class AppModel {
     private let tagService = FinderTagService()
     private let pasteboard: NSPasteboard
     private let trashService: FileTrashing
+    private let fileOperationService = FileOperationService()
+    private let conflictResolver: ((FileConflict) -> ConflictResolution)?
+    private var applyToAllResolution: ConflictResolution?
     let favorites: FavoritesStore
     let player: PlayerController
 
@@ -50,6 +53,7 @@ final class AppModel {
         favorites: FavoritesStore = FavoritesStore(),
         pasteboard: NSPasteboard = .general,
         trash: FileTrashing = FinderTrash(),
+        conflictResolver: ((FileConflict) -> ConflictResolution)? = nil,
         restoreLastFolder: Bool = true
     ) {
         self.loader = loader
@@ -59,6 +63,7 @@ final class AppModel {
         self.favorites = favorites
         self.pasteboard = pasteboard
         self.trashService = trash
+        self.conflictResolver = conflictResolver
         sortProperty = settings.sortProperty
         sortAscending = settings.sortAscending
 
@@ -160,15 +165,48 @@ final class AppModel {
 
     @discardableResult
     func move(_ item: FileItem, to folder: URL) -> Bool {
+        move([item], to: folder)
+    }
+
+    @discardableResult
+    func move(_ items: [FileItem], to folder: URL) -> Bool {
+        guard !items.isEmpty else { return false }
+
+        applyToAllResolution = nil
+        defer { applyToAllResolution = nil }
+
         do {
-            try FileMover.move(item.url, into: folder)
+            let results = try fileOperationService.perform(
+                .move,
+                sources: items.map(\.url),
+                into: folder,
+                resolve: resolveConflict(_:)
+            )
             errorMessage = nil
-            handleRemoved([item.url])
-            return true
+            let moved = Set(results.compactMap { $0.destination == nil ? nil : $0.source })
+            handleRemoved(moved)
+            return !moved.isEmpty
+        } catch is CancellationError {
+            return false
         } catch {
             errorMessage = error.localizedDescription
             return false
         }
+    }
+
+    private func resolveConflict(_ conflict: FileConflict) -> ConflictResolution {
+        if let conflictResolver {
+            return conflictResolver(conflict)
+        }
+        if let applyToAllResolution {
+            return applyToAllResolution
+        }
+
+        let result = ConflictDialog.run(conflict)
+        if result.applyToAll, result.resolution != .cancel {
+            applyToAllResolution = result.resolution
+        }
+        return result.resolution
     }
 
     // MARK: - Renaming

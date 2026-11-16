@@ -127,20 +127,47 @@ final class AppModelTests: XCTestCase {
         XCTAssertFalse(model.items.contains { $0.name == "clip.mov" })
     }
 
-    func testMoveConflictShowsAnError() throws {
+    func testMoveConflictCanBeSkipped() throws {
         try Data().write(to: directory.appendingPathComponent("clip.mov"))
         let target = directory.appendingPathComponent("Target", isDirectory: true)
         try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
         try Data().write(to: target.appendingPathComponent("clip.mov"))
 
-        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        let model = AppModel(
+            settings: AppSettings(defaults: defaults),
+            player: PlayerController(),
+            conflictResolver: { _ in .skip },
+            restoreLastFolder: false
+        )
         model.open(directory)
         let item = try XCTUnwrap(model.items.first { $0.name == "clip.mov" })
 
         XCTAssertFalse(model.move(item, to: target))
 
-        XCTAssertNotNil(model.errorMessage)
         XCTAssertTrue(model.items.contains { $0.name == "clip.mov" })
+    }
+
+    func testMoveConflictCanKeepBoth() throws {
+        try Data("new".utf8).write(to: directory.appendingPathComponent("clip.mov"))
+        let target = directory.appendingPathComponent("Target", isDirectory: true)
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+        try Data("old".utf8).write(to: target.appendingPathComponent("clip.mov"))
+
+        let model = AppModel(
+            settings: AppSettings(defaults: defaults),
+            player: PlayerController(),
+            conflictResolver: { _ in .keepBoth },
+            restoreLastFolder: false
+        )
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first { $0.name == "clip.mov" })
+
+        XCTAssertTrue(model.move(item, to: target))
+
+        XCTAssertEqual(
+            try String(contentsOf: target.appendingPathComponent("clip 2.mov"), encoding: .utf8),
+            "new"
+        )
     }
 
     func testRenameMovesTheFileAndSelectsIt() throws {
