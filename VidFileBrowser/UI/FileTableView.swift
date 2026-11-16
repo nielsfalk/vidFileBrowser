@@ -48,7 +48,7 @@ struct FileTableView: NSViewRepresentable {
         table.onPaste = { [weak coordinator = context.coordinator] in
             coordinator?.parent.onPaste?()
         }
-        table.allowsMultipleSelection = false
+        table.allowsMultipleSelection = true
         table.usesAlternatingRowBackgroundColors = true
         table.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
         table.setDraggingSourceOperationMask(.copy, forLocal: false)

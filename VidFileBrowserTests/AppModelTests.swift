@@ -341,6 +341,20 @@ final class AppModelTests: XCTestCase {
         XCTAssertNotNil(model.items.first { $0.name == source.lastPathComponent })
     }
 
+    func testMultipleSelectionKeepsTheListOrder() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        try Data().write(to: directory.appendingPathComponent("b.mov"))
+        try Data().write(to: directory.appendingPathComponent("c.mov"))
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        let ids = model.items.filter { $0.name != "b.mov" }.map(\.id)
+        model.selection = Set(ids)
+
+        XCTAssertEqual(model.selectedItems.map(\.name), ["a.mov", "c.mov"])
+        XCTAssertEqual(model.selectedItem?.name, "a.mov")
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),
