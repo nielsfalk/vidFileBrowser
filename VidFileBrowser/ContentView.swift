@@ -8,13 +8,13 @@ struct ContentView: View {
     @State private var browserWidth: CGFloat
     @State private var isDropTarget = false
 
-    init(dependencies: Dependencies = DependencyLocator.locate(), settings: AppSettings = AppSettings()) {
+    init(model: AppModel? = nil, dependencies: Dependencies = DependencyLocator.locate(), settings: AppSettings = AppSettings()) {
         self.dependencies = dependencies
         self.settings = settings
 
         let width = CGFloat(settings.browserWidth)
         _browserWidth = State(initialValue: min(max(width, 260), 800))
-        _model = State(initialValue: AppModel(settings: settings))
+        _model = State(initialValue: model ?? AppModel(settings: settings))
     }
 
     var body: some View {
