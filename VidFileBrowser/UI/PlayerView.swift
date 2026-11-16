@@ -35,6 +35,18 @@ struct PlayerView: View {
                 }
                 .transition(.opacity)
             }
+
+            if model.isTrimming {
+                VStack(spacing: 10) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Trimming…")
+                        .font(.callout)
+                        .foregroundStyle(.white)
+                }
+                .padding(20)
+                .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 10))
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)

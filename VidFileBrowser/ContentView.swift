@@ -61,6 +61,24 @@ struct ContentView: View {
             }
             return true
         }
+        .alert("Trim failed", isPresented: trimErrorPresented) {
+            Button("OK", role: .cancel) {
+                model.dismissTrimError()
+            }
+        } message: {
+            Text(model.trimError ?? "")
+        }
+    }
+
+    private var trimErrorPresented: Binding<Bool> {
+        Binding(
+            get: { model.trimError != nil },
+            set: { presented in
+                if !presented {
+                    model.dismissTrimError()
+                }
+            }
+        )
     }
 
     private var breadcrumbBar: some View {
