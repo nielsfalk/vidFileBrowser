@@ -25,6 +25,13 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   fi
 
   for sha in $commits; do
+    # Root commits predate the rules and cannot be amended without rewriting
+    # the whole history, so they are exempt.
+    parents="$(git rev-list --parents -n 1 "$sha")"
+    case "$parents" in
+      "$sha") continue ;;
+    esac
+
     if ! ( validate_commit_message "$(git log -1 --format=%B "$sha")" ); then
       printf 'pre-push: %s does not follow the commit rules\n' "$(git log -1 --format='%h %s' "$sha")" >&2
       status=1
