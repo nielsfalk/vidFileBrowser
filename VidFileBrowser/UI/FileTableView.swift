@@ -6,6 +6,7 @@ struct FileTableView: NSViewRepresentable {
     let sortProperty: SortProperty
     @Binding var selection: Set<FileItem.ID>
     var onActivate: ((FileItem) -> Void)? = nil
+    var buildContextMenu: ((FileItem, NSMenu) -> Void)? = nil
 
     private static let nameColumnID = NSUserInterfaceItemIdentifier("name")
     private static let valueColumnID = NSUserInterfaceItemIdentifier("value")
@@ -49,6 +50,11 @@ struct FileTableView: NSViewRepresentable {
         tagsColumn.minWidth = 44
         table.addTableColumn(tagsColumn)
 
+        let contextMenu = NSMenu()
+        contextMenu.delegate = context.coordinator
+        table.menu = contextMenu
+        context.coordinator.tableView = table
+
         let scrollView = NSScrollView()
         scrollView.documentView = table
         scrollView.hasVerticalScroller = true
@@ -79,9 +85,10 @@ struct FileTableView: NSViewRepresentable {
         }
     }
 
-    final class Coordinator: NSObject, NSTableViewDataSource, NSTableViewDelegate {
+    final class Coordinator: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate {
         var parent: FileTableView
         var items: [FileItem] = []
+        weak var tableView: NSTableView?
 
         init(_ parent: FileTableView) {
             self.parent = parent
@@ -125,6 +132,15 @@ struct FileTableView: NSViewRepresentable {
             guard let table = sender as? NSTableView else { return }
             let row = table.clickedRow >= 0 ? table.clickedRow : table.selectedRow
             activate(row: row)
+        }
+
+        func menuNeedsUpdate(_ menu: NSMenu) {
+            menu.removeAllItems()
+
+            guard let tableView else { return }
+            let row = tableView.clickedRow >= 0 ? tableView.clickedRow : tableView.selectedRow
+            guard items.indices.contains(row), let buildContextMenu = parent.buildContextMenu else { return }
+            buildContextMenu(items[row], menu)
         }
 
         private func nameCell(in tableView: NSTableView, item: FileItem) -> NSView {

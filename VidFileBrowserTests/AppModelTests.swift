@@ -97,6 +97,20 @@ final class AppModelTests: XCTestCase {
         XCTAssertNil(player.currentURL)
     }
 
+    func testToggleTagUpdatesTheList() throws {
+        try Data().write(to: directory.appendingPathComponent("clip.mov"))
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first)
+
+        model.toggleTag(.red, on: item)
+
+        XCTAssertEqual(model.items.first?.tagColors, [.red])
+
+        model.removeAllTags(from: try XCTUnwrap(model.items.first))
+        XCTAssertEqual(model.items.first?.tags, [])
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),

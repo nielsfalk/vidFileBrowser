@@ -17,7 +17,8 @@ struct FileBrowserView: View {
                 items: model.items,
                 sortProperty: model.sortProperty,
                 selection: $model.selection,
-                onActivate: model.activate
+                onActivate: model.activate,
+                buildContextMenu: makeContextMenu
             )
 
             Divider()
@@ -49,5 +50,27 @@ struct FileBrowserView: View {
             .padding(.vertical, 5)
         }
         .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    private func makeContextMenu(for item: FileItem, menu: NSMenu) {
+        let tagsItem = NSMenuItem(title: "Tags", action: nil, keyEquivalent: "")
+        let tagsMenu = NSMenu()
+
+        for color in TagColor.allCases {
+            let isOn = item.tagColors.contains(color)
+            let menuItem = ClosureMenuItem(title: FinderTagService.defaultName(for: color)) { [model] in
+                model.toggleTag(color, on: item)
+            }
+            menuItem.state = isOn ? .on : .off
+            tagsMenu.addItem(menuItem)
+        }
+
+        tagsMenu.addItem(.separator())
+        tagsMenu.addItem(ClosureMenuItem(title: "Remove All Tags") { [model] in
+            model.removeAllTags(from: item)
+        })
+
+        tagsItem.submenu = tagsMenu
+        menu.addItem(tagsItem)
     }
 }

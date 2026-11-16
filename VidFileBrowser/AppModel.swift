@@ -8,6 +8,7 @@ final class AppModel {
     private let settings: AppSettings
     private let watcher = DirectoryWatcher()
     private let trimService: TrimServicing
+    private let tagService = FinderTagService()
     let player: PlayerController
 
     private(set) var directory: URL?
@@ -144,6 +145,26 @@ final class AppModel {
 
     func dismissTrimError() {
         trimError = nil
+    }
+
+    // MARK: - Tags
+
+    func toggleTag(_ color: TagColor, on item: FileItem) {
+        do {
+            try tagService.toggle(color: color, on: item.url)
+            reload()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func removeAllTags(from item: FileItem) {
+        do {
+            try tagService.removeAll(from: item.url)
+            reload()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     private func performTrim(url: URL, range: TrimRange) {
