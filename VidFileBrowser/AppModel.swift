@@ -7,6 +7,7 @@ final class AppModel {
     private let loader: DirectoryLoader
     private let settings: AppSettings
     private let watcher = DirectoryWatcher()
+    private let trimService: TrimServicing
     let player: PlayerController
 
     private(set) var directory: URL?
@@ -14,6 +15,8 @@ final class AppModel {
     private(set) var errorMessage: String?
     private(set) var image: NSImage?
     private(set) var imageURL: URL?
+    private(set) var isTrimming = false
+    private(set) var trimError: String?
     var selection: Set<FileItem.ID> = []
 
     var sortProperty: SortProperty {
@@ -39,11 +42,13 @@ final class AppModel {
         loader: DirectoryLoader = DirectoryLoader(),
         settings: AppSettings = AppSettings(),
         player: PlayerController? = nil,
+        trimService: TrimServicing = TrimService(),
         restoreLastFolder: Bool = true
     ) {
         self.loader = loader
         self.settings = settings
         self.player = player ?? PlayerController(player: PlayerFactory.make())
+        self.trimService = trimService
         sortProperty = settings.sortProperty
         sortAscending = settings.sortAscending
 
@@ -123,6 +128,51 @@ final class AppModel {
         player.stop()
         image = nil
         imageURL = nil
+    }
+
+    // MARK: - Trimming
+
+    func trimLeft() {
+        guard let url = player.currentURL, player.duration > 0 else { return }
+        performTrim(url: url, range: TrimRange(start: player.currentTime, end: player.duration))
+    }
+
+    func trimRight() {
+        guard let url = player.currentURL, player.duration > 0 else { return }
+        performTrim(url: url, range: TrimRange(start: 0, end: player.currentTime))
+    }
+
+    func dismissTrimError() {
+        trimError = nil
+    }
+
+    private func performTrim(url: URL, range: TrimRange) {
+        guard range.duration > 0.05, !isTrimming else { return }
+
+        isTrimming = true
+        trimError = nil
+        let service = trimService
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            do {
+                try service.trimReplacing(url, range: range)
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.isTrimming = false
+                    self.reload()
+                    if let item = self.items.first(where: { $0.url == url }) {
+                        self.selection = [item.id]
+                    }
+                    self.player.load(url, autoplay: true)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.isTrimming = false
+                    self.trimError = error.localizedDescription
+                }
+            }
+        }
     }
 
     private func resort() {

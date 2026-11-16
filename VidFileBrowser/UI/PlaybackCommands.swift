@@ -38,10 +38,28 @@ struct PlaybackCommands: Commands {
             }
             .keyboardShortcut(".", modifiers: [])
             .disabled(!hasMedia)
+
+            Divider()
+
+            Button("Trim Left at Playhead") {
+                model.trimLeft()
+            }
+            .keyboardShortcut("n", modifiers: [])
+            .disabled(!hasVideo || model.isTrimming)
+
+            Button("Trim Right at Playhead") {
+                model.trimRight()
+            }
+            .keyboardShortcut("m", modifiers: [])
+            .disabled(!hasVideo || model.isTrimming)
         }
     }
 
     private var hasMedia: Bool {
         model.player.currentURL != nil || model.image != nil
+    }
+
+    private var hasVideo: Bool {
+        model.player.currentURL != nil
     }
 }

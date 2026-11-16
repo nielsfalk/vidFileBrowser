@@ -35,6 +35,10 @@ protocol FileTrashing {
     func trash(_ url: URL) throws -> URL?
 }
 
+protocol TrimServicing {
+    func trimReplacing(_ url: URL, range: TrimRange) throws
+}
+
 struct FinderTrash: FileTrashing {
     func trash(_ url: URL) throws -> URL? {
         var resulting: NSURL?
@@ -45,7 +49,7 @@ struct FinderTrash: FileTrashing {
 
 /// Cuts a video without re-encoding. The start is snapped back to the nearest
 /// keyframe, so the cut stays lossless.
-final class TrimService {
+final class TrimService: TrimServicing {
     private let ffmpegPath: String?
     private let ffprobePath: String?
     private let runner: ProcessRunning
