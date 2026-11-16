@@ -26,7 +26,7 @@ final class MPVOpenGLView: NSOpenGLView {
 
     override var isOpaque: Bool { true }
 
-    override var acceptsFirstResponder: Bool { true }
+    override var acceptsFirstResponder: Bool { false }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true

@@ -17,7 +17,7 @@ final class ImageCanvasView: NSView {
 
     override var isFlipped: Bool { true }
 
-    override var acceptsFirstResponder: Bool { true }
+    override var acceptsFirstResponder: Bool { false }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
         true
@@ -56,7 +56,6 @@ final class ImageCanvasView: NSView {
             window?.toggleFullScreen(nil)
             return
         }
-        window?.makeFirstResponder(self)
     }
 
     override func mouseDragged(with event: NSEvent) {

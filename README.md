@@ -285,7 +285,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 ### Fullscreen
 
 - [x] T42 Toggle fullscreen with `f` or double-click on the player, leave with `Esc`
-- [ ] T43 All shortcuts and menus work in fullscreen, including Up/Down file navigation
+- [x] T43 All shortcuts and menus work in fullscreen, including Up/Down file navigation
 
 ### Drag and drop, copy and paste
 
