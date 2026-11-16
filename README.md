@@ -237,7 +237,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T14 Sorting by name, date, label and size, folders always first
 - [x] T15 Sort dropdown and ascending/descending toggle, stored as a global setting
 - [x] T16 Keyboard navigation: Up/Down moves the selection, Enter or double-click opens a folder
-- [ ] T17 Detect playable files (video, image); non-media files are listed but not played
+- [x] T17 Detect playable files (video, image); non-media files are listed but not played
 - [ ] T18 Refresh the list automatically when the folder content changes on disk
 - [ ] T54 Multiple selection in the file list: Shift+Up/Down, Shift+click and Cmd+click
 - [ ] T55 Apply tags, Move to, Move to Trash and drag and drop to all selected files

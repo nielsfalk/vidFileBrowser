@@ -22,7 +22,7 @@ struct ContentView: View {
                 FileBrowserView(model: model)
                     .frame(width: browserWidth)
                 SplitHandle(width: $browserWidth, range: 260...800)
-                PlayerPlaceholderView()
+                PlayerPlaceholderView(item: model.selectedItem)
             }
         }
         .frame(minWidth: 900, minHeight: 560)
