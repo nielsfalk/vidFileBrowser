@@ -31,11 +31,15 @@ final class AppModel {
         items.first { selection.contains($0.id) }
     }
 
-    init(loader: DirectoryLoader = DirectoryLoader(), settings: AppSettings = AppSettings()) {
+    init(loader: DirectoryLoader = DirectoryLoader(), settings: AppSettings = AppSettings(), restoreLastFolder: Bool = true) {
         self.loader = loader
         self.settings = settings
         sortProperty = settings.sortProperty
         sortAscending = settings.sortAscending
+
+        if restoreLastFolder, let path = settings.lastFolderPath {
+            open(URL(fileURLWithPath: path, isDirectory: true))
+        }
     }
 
     func open(_ url: URL) {
@@ -47,6 +51,7 @@ final class AppModel {
         }
 
         directory = url
+        settings.lastFolderPath = url.path
         selection = []
         reload()
         watcher.watch(url) { [weak self] in

@@ -35,6 +35,19 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertFalse(reloaded.sortAscending)
     }
 
+    func testLayoutSettingsArePersisted() {
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertEqual(settings.browserWidth, AppSettings.defaultBrowserWidth)
+        XCTAssertNil(settings.lastFolderPath)
+
+        settings.browserWidth = 512
+        settings.lastFolderPath = "/tmp"
+
+        let reloaded = AppSettings(defaults: defaults)
+        XCTAssertEqual(reloaded.browserWidth, 512)
+        XCTAssertEqual(reloaded.lastFolderPath, "/tmp")
+    }
+
     func testModelReadsAndWritesSortSettings() {
         let settings = AppSettings(defaults: defaults)
         settings.sortProperty = .label

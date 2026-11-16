@@ -3,12 +3,18 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     private let dependencies: Dependencies
-    @State private var model = AppModel()
-    @State private var browserWidth: CGFloat = 440
+    private let settings: AppSettings
+    @State private var model: AppModel
+    @State private var browserWidth: CGFloat
     @State private var isDropTarget = false
 
-    init(dependencies: Dependencies = DependencyLocator.locate()) {
+    init(dependencies: Dependencies = DependencyLocator.locate(), settings: AppSettings = AppSettings()) {
         self.dependencies = dependencies
+        self.settings = settings
+
+        let width = CGFloat(settings.browserWidth)
+        _browserWidth = State(initialValue: min(max(width, 260), 800))
+        _model = State(initialValue: AppModel(settings: settings))
     }
 
     var body: some View {
@@ -26,6 +32,10 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 900, minHeight: 560)
+        .background(WindowConfigurator().frame(width: 0, height: 0))
+        .onChange(of: browserWidth) { _, newWidth in
+            settings.browserWidth = Double(newWidth)
+        }
         .overlay {
             if isDropTarget {
                 Rectangle()
