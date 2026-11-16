@@ -244,7 +244,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 ### Player
 
-- [ ] T52 `Player` protocol: load, play, pause, seek, position, duration and end-of-file event
+- [x] T52 `Player` protocol: load, play, pause, seek, position, duration and end-of-file event
 - [ ] T53 libmpv integration: link `libmpv` from Homebrew and embed mpv's video view in the player area
 - [ ] T19 Play the selected video with the mpv player, starting automatically on selection
 - [ ] T20 Stop on the last frame when a video ends
