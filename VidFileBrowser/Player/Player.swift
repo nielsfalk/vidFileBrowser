@@ -36,7 +36,6 @@ enum PlayerError: LocalizedError, Equatable {
 
 /// A media backend. All calls happen on the main actor; callbacks are
 /// delivered on the main actor as well.
-@MainActor
 protocol Player: AnyObject {
     var onStateChange: ((PlayerState) -> Void)? { get set }
     var onPositionChange: ((PlayerPosition) -> Void)? { get set }

@@ -1,7 +1,6 @@
 import AppKit
 
 /// Used when the media backend is not available. Opening a file reports why.
-@MainActor
 final class UnavailablePlayer: Player {
     var onStateChange: ((PlayerState) -> Void)?
     var onPositionChange: ((PlayerPosition) -> Void)?

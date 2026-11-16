@@ -28,13 +28,16 @@ struct ContentView: View {
                 FileBrowserView(model: model)
                     .frame(width: browserWidth)
                 SplitHandle(width: $browserWidth, range: 260...800)
-                PlayerPlaceholderView(item: model.selectedItem)
+                PlayerView(model: model)
             }
         }
         .frame(minWidth: 900, minHeight: 560)
         .background(WindowConfigurator().frame(width: 0, height: 0))
         .onChange(of: browserWidth) { _, newWidth in
             settings.browserWidth = Double(newWidth)
+        }
+        .onChange(of: model.selection) { _, _ in
+            model.selectionDidChange()
         }
         .overlay {
             if isDropTarget {

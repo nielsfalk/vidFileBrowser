@@ -1,6 +1,5 @@
 import Foundation
 
-@MainActor
 enum PlayerFactory {
     static func make(dependencies: Dependencies = DependencyLocator.locate()) -> Player {
         guard let library = MPVLibrary.locate(dependencies: dependencies) else {

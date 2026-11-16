@@ -2,7 +2,6 @@ import AppKit
 import XCTest
 @testable import VidFileBrowser
 
-@MainActor
 final class PlayerControllerTests: XCTestCase {
     func testLoadDelegatesToBackend() throws {
         let player = MockPlayer()
@@ -96,7 +95,6 @@ final class PlayerControllerTests: XCTestCase {
     }
 }
 
-@MainActor
 private final class MockPlayer: Player {
     var onStateChange: ((PlayerState) -> Void)?
     var onPositionChange: ((PlayerPosition) -> Void)?

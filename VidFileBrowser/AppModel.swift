@@ -6,6 +6,7 @@ final class AppModel {
     private let loader: DirectoryLoader
     private let settings: AppSettings
     private let watcher = DirectoryWatcher()
+    let player: PlayerController
 
     private(set) var directory: URL?
     private(set) var items: [FileItem] = []
@@ -31,9 +32,15 @@ final class AppModel {
         items.first { selection.contains($0.id) }
     }
 
-    init(loader: DirectoryLoader = DirectoryLoader(), settings: AppSettings = AppSettings(), restoreLastFolder: Bool = true) {
+    init(
+        loader: DirectoryLoader = DirectoryLoader(),
+        settings: AppSettings = AppSettings(),
+        player: PlayerController? = nil,
+        restoreLastFolder: Bool = true
+    ) {
         self.loader = loader
         self.settings = settings
+        self.player = player ?? PlayerController(player: PlayerFactory.make())
         sortProperty = settings.sortProperty
         sortAscending = settings.sortAscending
 
@@ -81,6 +88,19 @@ final class AppModel {
         if item.isDirectory {
             open(item.url)
         }
+    }
+
+    func selectionDidChange() {
+        playSelectedItem()
+    }
+
+    func playSelectedItem() {
+        guard let item = selectedItem, !item.isDirectory, item.kind == .video else {
+            player.stop()
+            return
+        }
+        guard player.currentURL != item.url else { return }
+        player.load(item.url, autoplay: true)
     }
 
     private func resort() {

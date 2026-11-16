@@ -1,9 +1,9 @@
 import AppKit
+import Foundation
 import Observation
 
 /// Observable facade over a `Player` backend for SwiftUI.
 @Observable
-@MainActor
 final class PlayerController {
     private(set) var state: PlayerState = .idle
     private(set) var position = PlayerPosition()

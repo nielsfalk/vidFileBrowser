@@ -2,7 +2,6 @@ import AppKit
 import Foundation
 
 /// Plays media through mpv's client API and renders into the attached view.
-@MainActor
 final class MPVPlayer: Player {
     var onStateChange: ((PlayerState) -> Void)?
     var onPositionChange: ((PlayerPosition) -> Void)?

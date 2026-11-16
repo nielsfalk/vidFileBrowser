@@ -11,7 +11,6 @@ final class MPVLibraryTests: XCTestCase {
         XCTAssertNil(MPVLibrary.locate(dependencies: missing))
     }
 
-    @MainActor
     func testFactoryFallsBackWithoutLibmpv() {
         let missing = Dependencies(libmpvPath: nil, ffmpegPath: nil)
 

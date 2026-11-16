@@ -23,7 +23,7 @@ final class AppModelTests: XCTestCase {
     }
 
     func testOpeningAFolderStoresItAsLastFolder() {
-        let model = AppModel(settings: AppSettings(defaults: defaults), restoreLastFolder: false)
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
 
         model.open(directory)
 
@@ -35,7 +35,7 @@ final class AppModelTests: XCTestCase {
         let settings = AppSettings(defaults: defaults)
         settings.lastFolderPath = directory.path
 
-        let model = AppModel(settings: settings)
+        let model = AppModel(settings: settings, player: PlayerController())
 
         XCTAssertEqual(model.directory?.path, directory.path)
     }
@@ -44,10 +44,40 @@ final class AppModelTests: XCTestCase {
         let settings = AppSettings(defaults: defaults)
         settings.lastFolderPath = directory.appendingPathComponent("missing").path
 
-        let model = AppModel(settings: settings)
+        let model = AppModel(settings: settings, player: PlayerController())
 
         XCTAssertNil(model.directory)
         XCTAssertTrue(model.items.isEmpty)
+    }
+
+    func testSelectingAVideoStartsPlayback() throws {
+        let videoURL = directory.appendingPathComponent("clip.mov")
+        try Data().write(to: videoURL)
+
+        let player = PlayerController()
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: player, restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first)
+        model.selection = [item.id]
+
+        model.selectionDidChange()
+
+        XCTAssertEqual(player.currentURL, item.url)
+    }
+
+    func testSelectingANonPlayableFileStopsPlayback() throws {
+        let textURL = directory.appendingPathComponent("notes.txt")
+        try Data().write(to: textURL)
+
+        let player = PlayerController()
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: player, restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first)
+        model.selection = [item.id]
+
+        model.selectionDidChange()
+
+        XCTAssertNil(player.currentURL)
     }
 
     func testListsFolderContentsInSortOrder() throws {
@@ -58,7 +88,7 @@ final class AppModelTests: XCTestCase {
         try Data().write(to: directory.appendingPathComponent("b.mov"))
         try Data().write(to: directory.appendingPathComponent("a.mkv"))
 
-        let model = AppModel(settings: AppSettings(defaults: defaults), restoreLastFolder: false)
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
         model.sortProperty = .name
         model.sortAscending = true
         model.open(directory)
