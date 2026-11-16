@@ -42,6 +42,10 @@ final class PlayerController {
     }
 
     func play() {
+        if state == .ended {
+            player.seek(to: 0)
+            position.time = 0
+        }
         player.play()
     }
 

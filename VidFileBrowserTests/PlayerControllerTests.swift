@@ -57,6 +57,33 @@ final class PlayerControllerTests: XCTestCase {
         XCTAssertEqual(controller.state, .ended)
     }
 
+    func testEndOfFileKeepsTheLastFrame() {
+        let player = MockPlayer()
+        let controller = PlayerController(player: player)
+        controller.load(URL(fileURLWithPath: "/tmp/movie.mp4"))
+        player.report(position: PlayerPosition(time: 59.8, duration: 60, isSeekable: true))
+
+        player.report(state: .playing)
+        player.reportEndOfFile()
+
+        XCTAssertEqual(controller.state, .ended)
+        XCTAssertEqual(controller.currentTime, 59.8)
+        XCTAssertNotNil(controller.currentURL)
+        XCTAssertEqual(player.pauseCount, 0)
+    }
+
+    func testPlayingAfterTheEndRestartsFromTheBeginning() {
+        let player = MockPlayer()
+        let controller = PlayerController(player: player)
+        controller.load(URL(fileURLWithPath: "/tmp/movie.mp4"))
+        player.reportEndOfFile()
+
+        controller.play()
+
+        XCTAssertEqual(player.seekedTime, 0)
+        XCTAssertEqual(player.playCount, 1)
+    }
+
     func testTogglePlayPause() {
         let player = MockPlayer()
         let controller = PlayerController(player: player)
