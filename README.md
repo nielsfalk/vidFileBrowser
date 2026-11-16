@@ -235,7 +235,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T12 File list view (`NSTableView`) with Name, Sort value and Tags columns
 - [x] T13 Show Finder tag colors as dots in the Tags column
 - [x] T14 Sorting by name, date, label and size, folders always first
-- [ ] T15 Sort dropdown and ascending/descending toggle, stored as a global setting
+- [x] T15 Sort dropdown and ascending/descending toggle, stored as a global setting
 - [ ] T16 Keyboard navigation: Up/Down moves the selection, Enter or double-click opens a folder
 - [ ] T17 Detect playable files (video, image); non-media files are listed but not played
 - [ ] T18 Refresh the list automatically when the folder content changes on disk

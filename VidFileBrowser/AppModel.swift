@@ -4,17 +4,24 @@ import Observation
 @Observable
 final class AppModel {
     private let loader: DirectoryLoader
+    private let settings: AppSettings
 
     private(set) var directory: URL?
     private(set) var items: [FileItem] = []
     private(set) var errorMessage: String?
     var selection: Set<FileItem.ID> = []
 
-    var sortProperty: SortProperty = .date {
-        didSet { resort() }
+    var sortProperty: SortProperty {
+        didSet {
+            settings.sortProperty = sortProperty
+            resort()
+        }
     }
-    var sortAscending = true {
-        didSet { resort() }
+    var sortAscending: Bool {
+        didSet {
+            settings.sortAscending = sortAscending
+            resort()
+        }
     }
 
     private var allItems: [FileItem] = []
@@ -23,8 +30,11 @@ final class AppModel {
         items.first { selection.contains($0.id) }
     }
 
-    init(loader: DirectoryLoader = DirectoryLoader()) {
+    init(loader: DirectoryLoader = DirectoryLoader(), settings: AppSettings = AppSettings()) {
         self.loader = loader
+        self.settings = settings
+        sortProperty = settings.sortProperty
+        sortAscending = settings.sortAscending
     }
 
     func open(_ url: URL) {
