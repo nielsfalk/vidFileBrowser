@@ -10,6 +10,15 @@ final class AppModel {
     private(set) var errorMessage: String?
     var selection: Set<FileItem.ID> = []
 
+    var sortProperty: SortProperty = .date {
+        didSet { resort() }
+    }
+    var sortAscending = true {
+        didSet { resort() }
+    }
+
+    private var allItems: [FileItem] = []
+
     var selectedItem: FileItem? {
         items.first { selection.contains($0.id) }
     }
@@ -33,14 +42,17 @@ final class AppModel {
 
     func reload() {
         guard let directory else {
+            allItems = []
             items = []
             return
         }
 
         do {
-            items = try loader.loadItems(in: directory)
+            allItems = try loader.loadItems(in: directory)
             errorMessage = nil
+            resort()
         } catch {
+            allItems = []
             items = []
             errorMessage = error.localizedDescription
         }
@@ -50,5 +62,9 @@ final class AppModel {
         if item.isDirectory {
             open(item.url)
         }
+    }
+
+    private func resort() {
+        items = FileSorter.sorted(allItems, by: sortProperty, ascending: sortAscending)
     }
 }

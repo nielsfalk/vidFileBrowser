@@ -2,7 +2,6 @@ import SwiftUI
 
 struct FileBrowserView: View {
     @Bindable var model: AppModel
-    private let sortProperty: SortProperty = .date
 
     var body: some View {
         VStack(spacing: 0) {
@@ -16,7 +15,7 @@ struct FileBrowserView: View {
 
             FileTableView(
                 items: model.items,
-                sortProperty: sortProperty,
+                sortProperty: model.sortProperty,
                 selection: $model.selection
             )
 
