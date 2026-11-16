@@ -132,6 +132,12 @@ struct PlayerView: View {
                     }
                 }
             }
+
+            Button("Rename…") {
+                if let name = RenamePrompt.run(currentName: item.name) {
+                    model.rename(item, to: name)
+                }
+            }
         }
 
         Divider()

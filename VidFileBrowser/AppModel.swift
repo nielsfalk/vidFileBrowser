@@ -165,6 +165,39 @@ final class AppModel {
         }
     }
 
+    // MARK: - Renaming
+
+    @discardableResult
+    func rename(_ item: FileItem, to newName: String) -> Bool {
+        let name = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty, !name.contains("/"), name != item.name else { return false }
+
+        let target = item.url.deletingLastPathComponent().appendingPathComponent(name)
+        guard !FileManager.default.fileExists(atPath: target.path) else {
+            errorMessage = "An item named \"\(name)\" already exists."
+            return false
+        }
+
+        do {
+            try FileManager.default.moveItem(at: item.url, to: target)
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+
+        errorMessage = nil
+        let wasPlaying = player.currentURL == item.url
+        reload()
+
+        if let renamed = items.first(where: { $0.url == target }) {
+            selection = [renamed.id]
+            if wasPlaying {
+                player.load(renamed.url, autoplay: true)
+            }
+        }
+        return true
+    }
+
     // MARK: - Tags
 
     func toggleTag(_ color: TagColor, on item: FileItem) {

@@ -73,6 +73,12 @@ struct FileBrowserView: View {
         tagsItem.submenu = tagsMenu
         menu.addItem(tagsItem)
 
+        menu.addItem(ClosureMenuItem(title: "Rename…") { [model] in
+            if let name = RenamePrompt.run(currentName: item.name) {
+                model.rename(item, to: name)
+            }
+        })
+
         let favorites = model.favorites.folders.compactMap { folder -> (FavoriteFolder, URL)? in
             guard let url = model.favorites.url(for: folder) else { return nil }
             return (folder, url)

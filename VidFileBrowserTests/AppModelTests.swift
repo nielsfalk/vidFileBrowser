@@ -143,6 +143,40 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(model.items.contains { $0.name == "clip.mov" })
     }
 
+    func testRenameMovesTheFileAndSelectsIt() throws {
+        try Data().write(to: directory.appendingPathComponent("old.mov"))
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first)
+
+        XCTAssertTrue(model.rename(item, to: "new.mov"))
+
+        XCTAssertEqual(model.items.map(\.name), ["new.mov"])
+        XCTAssertEqual(model.selection, [model.items[0].id])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: item.url.path))
+    }
+
+    func testRenameRejectsExistingNames() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        try Data().write(to: directory.appendingPathComponent("b.mov"))
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first { $0.name == "a.mov" })
+
+        XCTAssertFalse(model.rename(item, to: "b.mov"))
+        XCTAssertNotNil(model.errorMessage)
+    }
+
+    func testRenameRejectsInvalidNames() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first)
+
+        XCTAssertFalse(model.rename(item, to: "   "))
+        XCTAssertFalse(model.rename(item, to: "a/b.mov"))
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),
