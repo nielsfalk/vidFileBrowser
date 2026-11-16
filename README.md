@@ -297,5 +297,5 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 ### Release
 
-- [ ] T49 App icon and app metadata
+- [x] T49 App icon and app metadata
 - [ ] T50 Signing (hardened runtime, `disable-library-validation`), notarization and DMG build
