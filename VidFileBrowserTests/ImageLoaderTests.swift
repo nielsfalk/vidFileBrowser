@@ -39,6 +39,26 @@ final class ImageLoaderTests: XCTestCase {
         XCTAssertEqual(tall.size.height, 200, accuracy: 0.01)
         XCTAssertEqual(tall.midX, 200, accuracy: 0.01)
     }
+
+    func testZoomIsClamped() {
+        XCTAssertEqual(ImageCanvasView.clampedZoom(0.01), ImageCanvasView.minZoom)
+        XCTAssertEqual(ImageCanvasView.clampedZoom(50), ImageCanvasView.maxZoom)
+        XCTAssertEqual(ImageCanvasView.clampedZoom(2), 2)
+    }
+
+    func testTargetRectAppliesZoomAndPan() {
+        let bounds = NSRect(x: 0, y: 0, width: 400, height: 200)
+        let size = NSSize(width: 200, height: 100)
+
+        let zoomed = ImageCanvasView.targetRect(imageSize: size, in: bounds, zoom: 2, pan: .zero)
+        XCTAssertEqual(zoomed.size, NSSize(width: 800, height: 400))
+        XCTAssertEqual(zoomed.midX, bounds.midX)
+        XCTAssertEqual(zoomed.midY, bounds.midY)
+
+        let panned = ImageCanvasView.targetRect(imageSize: size, in: bounds, zoom: 1, pan: NSPoint(x: 10, y: -5))
+        XCTAssertEqual(panned.midX, bounds.midX + 10)
+        XCTAssertEqual(panned.midY, bounds.midY - 5)
+    }
 }
 
 enum TestImage {

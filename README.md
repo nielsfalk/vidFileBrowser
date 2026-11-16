@@ -251,7 +251,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T21 Clickable progress bar overlaid on the mpv view that shows the position and seeks on click
 - [x] T22 Hide the progress bar after mouse inactivity, show it again on mouse movement
 - [x] T23 Show the selected image (ImageIO / NSImage) fitted to the player area
-- [ ] T24 Zoom (pinch, scroll wheel with modifier) and pan (drag) for images
+- [x] T24 Zoom (pinch, scroll wheel with modifier) and pan (drag) for images
 - [ ] T25 Playback shortcuts: Space play/pause, Left/Right skip 10 s, `,`/`.` skip 30 s
 
 ### Trimming
