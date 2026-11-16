@@ -289,7 +289,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 ### Drag and drop, copy and paste
 
-- [ ] T44 File operation service: copy and move files with conflict detection
+- [x] T44 File operation service: copy and move files with conflict detection
 - [ ] T45 Conflict dialog: Replace, Keep both, Skip, Cancel and Apply to all
 - [ ] T46 Drag files from the file browser to Finder
 - [ ] T47 Drop files from Finder into the file browser
