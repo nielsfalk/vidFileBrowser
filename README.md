@@ -158,3 +158,93 @@ After the current file is moved or trashed, the **next** file in the list is sel
 | `Cmd+C` / `Cmd+X` / `Cmd+V` | Copy / cut / paste files |
 
 While a menu opened with `y` or `x` is visible, Up/Down moves through the menu entries, Enter runs the selected entry and `Esc` closes the menu.
+
+## Tasks
+
+Every commit references one of these task numbers (see `agents.md`). A checked task is done; it can be unchecked again if its scope changes.
+
+### Project setup
+
+- [x] T01 Write the feature specification in this README
+- [x] T02 Choose the tech stack
+- [ ] T03 Create the Xcode project: SwiftUI app, macOS 14 deployment target, App Sandbox enabled
+- [ ] T04 Add git hooks (`commit-msg`, `pre-push`) that enforce the commit rules, plus an `installHooks` task
+- [ ] T05 Add a unit test target and a command-line build and test command (`xcodebuild test`)
+
+### Window and folder access
+
+- [ ] T06 Main window layout: breadcrumb on top, resizable split view with file browser left and player right
+- [ ] T07 Folder access: open dialog to grant a folder, store it as a security-scoped bookmark, restore access on launch
+- [ ] T08 Remember the last folder, window frame and divider position across launches
+
+### Breadcrumb path
+
+- [ ] T09 Show the current folder path as breadcrumb segments
+- [ ] T10 Clicking a breadcrumb segment opens that folder
+
+### File browser
+
+- [ ] T11 Directory model: load files and folders of the current folder with name, date, size and tags
+- [ ] T12 File list view (`NSTableView`) with Name, Sort value and Tags columns
+- [ ] T13 Show Finder tag colors as dots in the Tags column
+- [ ] T14 Sorting by name, date, label and size, folders always first
+- [ ] T15 Sort dropdown and ascending/descending toggle, stored as a global setting
+- [ ] T16 Keyboard navigation: Up/Down moves the selection, Enter or double-click opens a folder
+- [ ] T17 Detect playable files (video, image); non-media files are listed but not played
+- [ ] T18 Refresh the list automatically when the folder content changes on disk
+
+### Player
+
+- [ ] T19 Play the selected video with AVPlayer, starting automatically on selection
+- [ ] T20 Stop on the last frame when a video ends
+- [ ] T21 Clickable progress bar at the bottom that shows the position and seeks on click
+- [ ] T22 Hide the progress bar after mouse inactivity, show it again on mouse movement
+- [ ] T23 Show the selected image fitted to the player area
+- [ ] T24 Zoom (pinch, scroll wheel with modifier) and pan (drag) for images
+- [ ] T25 Playback shortcuts: Space play/pause, Left/Right skip 10 s, `,`/`.` skip 30 s
+
+### Trimming
+
+- [ ] T26 Trim service: lossless, keyframe-snapped export of a time range (`AVAssetExportSession` passthrough)
+- [ ] T27 Replace the original: write to a temp file, move the original to the Trash, move the trimmed file into place
+- [ ] T28 Keep Finder tags and creation date on the trimmed file
+- [ ] T29 Trim left (`n`) and trim right (`m`) at the current position, then reload the player
+- [ ] T30 Show progress during a trim and report errors
+
+### Finder tags
+
+- [ ] T31 Tag service: read and write Finder tags and label colors
+- [ ] T32 Tags submenu: toggle each tag color, "Remove all tags"
+
+### Favorite folders
+
+- [ ] T33 Settings window: add, remove and reorder favorite folders (stored as security-scoped bookmarks)
+- [ ] T34 Move a file into a favorite folder
+
+### Context menu
+
+- [ ] T35 Context menu on right-click in the file browser and the player
+- [ ] T36 Move to submenu with the favorite folders
+- [ ] T37 Rename action
+- [ ] T38 Reveal in Finder and Copy path actions
+- [ ] T39 Move to Trash action
+- [ ] T40 After a move or trash, select the next file and start playing it
+- [ ] T41 `y` opens the context menu and `x` opens the Move to menu for the current file, navigable with Up/Down/Enter/Esc
+
+### Fullscreen
+
+- [ ] T42 Toggle fullscreen with `f` or double-click on the player, leave with `Esc`
+- [ ] T43 All shortcuts and menus work in fullscreen, including Up/Down file navigation
+
+### Drag and drop, copy and paste
+
+- [ ] T44 File operation service: copy and move files with conflict detection
+- [ ] T45 Conflict dialog: Replace, Keep both, Skip, Cancel and Apply to all
+- [ ] T46 Drag files from the file browser to Finder
+- [ ] T47 Drop files from Finder into the file browser
+- [ ] T48 Copy, cut and paste files with `Cmd+C`, `Cmd+X` and `Cmd+V`, also with Finder
+
+### Release
+
+- [ ] T49 App icon and app metadata
+- [ ] T50 Signing, App Store build and submission
