@@ -36,7 +36,9 @@ protocol FileTrashing {
 }
 
 protocol TrimServicing {
-    func trimReplacing(_ url: URL, range: TrimRange) throws
+    /// Trims and replaces the file, returning the URL of the trimmed file.
+    @discardableResult
+    func trimReplacing(_ url: URL, range: TrimRange) throws -> URL
 }
 
 struct FinderTrash: FileTrashing {
@@ -106,9 +108,10 @@ final class TrimService: TrimServicing {
         }
     }
 
-    /// Cuts into a temporary file next to the original, moves the original to
-    /// the Trash and puts the trimmed file in its place.
-    func trimReplacing(_ url: URL, range: TrimRange) throws {
+    /// Cuts into a temporary file next to the original, renames it with the
+    /// `_t` suffix, moves the original to the Trash and returns the new URL.
+    @discardableResult
+    func trimReplacing(_ url: URL, range: TrimRange) throws -> URL {
         guard range.duration > 0.05 else { throw TrimError.invalidRange }
 
         let directory = url.deletingLastPathComponent()
@@ -121,17 +124,25 @@ final class TrimService: TrimServicing {
 
         try trim(input: url, range: range, output: temp)
 
+        let trimmedName = TrimNaming.trimmedName(for: url.lastPathComponent)
+        var destination = directory.appendingPathComponent(trimmedName)
+        if destination.standardizedFileURL != url.standardizedFileURL,
+           FileManager.default.fileExists(atPath: destination.path) {
+            destination = FileOperationService.uniqueDestination(for: destination)
+        }
+
         let metadata = FileMetadata.capture(at: url)
         let trashed = try trash.trash(url)
         do {
-            try FileManager.default.moveItem(at: temp, to: url)
-            metadata.apply(to: url)
+            try FileManager.default.moveItem(at: temp, to: destination)
+            metadata.apply(to: destination)
         } catch {
             if let trashed {
                 try? FileManager.default.moveItem(at: trashed, to: url)
             }
             throw error
         }
+        return destination
     }
 
     static func trimArguments(input: URL, start: Double, duration: Double, output: URL) -> [String] {

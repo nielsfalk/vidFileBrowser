@@ -45,6 +45,18 @@ final class AppModelTrimTests: XCTestCase {
         XCTAssertEqual(trimmer.ranges, [TrimRange(start: 0, end: 4)])
     }
 
+    func testTrimmingSelectsAndPlaysTheTrimmedFile() throws {
+        let trimmer = RecordingTrimmer()
+        let model = try makeModel(trimmer: trimmer)
+
+        model.trimLeft()
+        try waitForTrim(model)
+
+        let trimmed = try XCTUnwrap(model.items.first { $0.name == "clip_t.mov" })
+        XCTAssertEqual(model.selection, [trimmed.id])
+        XCTAssertEqual(model.player.currentURL, trimmed.url)
+    }
+
     func testTrimErrorIsSurfaced() throws {
         let trimmer = RecordingTrimmer()
         trimmer.error = TrimError.failed("boom")
@@ -86,9 +98,14 @@ private final class RecordingTrimmer: TrimServicing {
     var ranges: [TrimRange] = []
     var error: Error?
 
-    func trimReplacing(_ url: URL, range: TrimRange) throws {
+    func trimReplacing(_ url: URL, range: TrimRange) throws -> URL {
         if let error { throw error }
         ranges.append(range)
+
+        let destination = url.deletingLastPathComponent()
+            .appendingPathComponent(TrimNaming.trimmedName(for: url.lastPathComponent))
+        try FileManager.default.moveItem(at: url, to: destination)
+        return destination
     }
 }
 

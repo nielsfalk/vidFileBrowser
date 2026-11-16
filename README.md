@@ -268,6 +268,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T28 Keep Finder tags and creation date on the trimmed file
 - [x] T29 Trim left (`n`) and trim right (`m`) at the current position, then reload the player
 - [x] T30 Show progress during a trim and report errors
+- [x] T57 Add `_t` to the trimmed file name before the first dot
 
 ### Finder tags
 

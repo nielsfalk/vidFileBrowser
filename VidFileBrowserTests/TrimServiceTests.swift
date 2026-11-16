@@ -99,10 +99,12 @@ final class TrimServiceTests: XCTestCase {
 
         try service.trimReplacing(file, range: TrimRange(start: 1, end: 2))
 
+        let trimmed = directory.appendingPathComponent("clip_t.mov")
         XCTAssertEqual(trash.trashedURLs, [file])
-        XCTAssertEqual(try String(contentsOf: file, encoding: .utf8), "trimmed")
+        XCTAssertEqual(try String(contentsOf: trimmed, encoding: .utf8), "trimmed")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
         let leftovers = try FileManager.default.contentsOfDirectory(atPath: directory.path)
-        XCTAssertEqual(leftovers, ["clip.mov"])
+        XCTAssertEqual(leftovers, ["clip_t.mov"])
     }
 
     func testTrimReplacingKeepsTheOriginalOnFailure() throws {

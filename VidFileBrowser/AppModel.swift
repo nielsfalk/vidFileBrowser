@@ -488,15 +488,15 @@ final class AppModel {
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             do {
-                try service.trimReplacing(url, range: range)
+                let trimmedURL = try service.trimReplacing(url, range: range)
                 DispatchQueue.main.async {
                     guard let self else { return }
                     self.isTrimming = false
                     self.reload()
-                    if let item = self.items.first(where: { $0.url == url }) {
+                    if let item = self.items.first(where: { $0.url == trimmedURL }) {
                         self.selection = [item.id]
+                        self.player.load(trimmedURL, autoplay: true)
                     }
-                    self.player.load(url, autoplay: true)
                 }
             } catch {
                 DispatchQueue.main.async {
