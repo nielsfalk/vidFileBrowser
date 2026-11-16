@@ -18,7 +18,8 @@ struct FileBrowserView: View {
                 sortProperty: model.sortProperty,
                 selection: $model.selection,
                 onActivate: model.activate,
-                buildContextMenu: makeContextMenu
+                buildContextMenu: makeContextMenu,
+                buildMoveToMenu: makeMoveToMenu
             )
 
             Divider()
@@ -91,21 +92,21 @@ struct FileBrowserView: View {
             model.moveToTrash([item])
         })
 
-        let favorites = model.favorites.folders.compactMap { folder -> (FavoriteFolder, URL)? in
-            guard let url = model.favorites.url(for: folder) else { return nil }
-            return (folder, url)
-        }
-
-        if !favorites.isEmpty {
+        let moveToMenu = NSMenu()
+        makeMoveToMenu(for: item, menu: moveToMenu)
+        if !moveToMenu.items.isEmpty {
             let moveToItem = NSMenuItem(title: "Move to", action: nil, keyEquivalent: "")
-            let moveToMenu = NSMenu()
-            for (folder, url) in favorites {
-                moveToMenu.addItem(ClosureMenuItem(title: folder.name) { [model] in
-                    model.move(item, to: url)
-                })
-            }
             moveToItem.submenu = moveToMenu
             menu.addItem(moveToItem)
+        }
+    }
+
+    private func makeMoveToMenu(for item: FileItem, menu: NSMenu) {
+        for folder in model.favorites.folders {
+            guard let url = model.favorites.url(for: folder) else { continue }
+            menu.addItem(ClosureMenuItem(title: folder.name) { [model] in
+                model.move(item, to: url)
+            })
         }
     }
 }

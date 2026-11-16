@@ -7,6 +7,7 @@ struct FileTableView: NSViewRepresentable {
     @Binding var selection: Set<FileItem.ID>
     var onActivate: ((FileItem) -> Void)? = nil
     var buildContextMenu: ((FileItem, NSMenu) -> Void)? = nil
+    var buildMoveToMenu: ((FileItem, NSMenu) -> Void)? = nil
 
     private static let nameColumnID = NSUserInterfaceItemIdentifier("name")
     private static let valueColumnID = NSUserInterfaceItemIdentifier("value")
@@ -24,6 +25,12 @@ struct FileTableView: NSViewRepresentable {
         table.doubleAction = #selector(Coordinator.activateClickedRow(_:))
         table.onActivateRow = { [weak coordinator = context.coordinator] row in
             coordinator?.activate(row: row)
+        }
+        table.onShowContextMenu = { [weak coordinator = context.coordinator] in
+            coordinator?.showContextMenu()
+        }
+        table.onShowMoveToMenu = { [weak coordinator = context.coordinator] in
+            coordinator?.showMoveToMenu()
         }
         table.allowsMultipleSelection = false
         table.usesAlternatingRowBackgroundColors = true
@@ -143,6 +150,33 @@ struct FileTableView: NSViewRepresentable {
             buildContextMenu(items[row], menu)
         }
 
+        func showContextMenu() {
+            guard let table = tableView, let menu = table.menu else { return }
+            menuNeedsUpdate(menu)
+            guard !menu.items.isEmpty else { return }
+            popUp(menu, at: table.selectedRow, in: table)
+        }
+
+        func showMoveToMenu() {
+            guard let table = tableView, items.indices.contains(table.selectedRow) else { return }
+
+            let menu = NSMenu()
+            if let buildMoveToMenu = parent.buildMoveToMenu {
+                buildMoveToMenu(items[table.selectedRow], menu)
+            }
+            guard !menu.items.isEmpty else {
+                NSSound.beep()
+                return
+            }
+            popUp(menu, at: table.selectedRow, in: table)
+        }
+
+        private func popUp(_ menu: NSMenu, at row: Int, in table: NSTableView) {
+            let rowRect = row >= 0 ? table.rect(ofRow: row) : NSRect(x: 8, y: 8, width: 1, height: 1)
+            let point = NSPoint(x: rowRect.minX + 24, y: rowRect.maxY)
+            menu.popUp(positioning: nil, at: point, in: table)
+        }
+
         private func nameCell(in tableView: NSTableView, item: FileItem) -> NSView {
             let identifier = NSUserInterfaceItemIdentifier("nameCell")
             let cell: NSTableCellView
@@ -225,8 +259,25 @@ struct FileTableView: NSViewRepresentable {
 
 private final class FileTable: NSTableView {
     var onActivateRow: ((Int) -> Void)?
+    var onShowContextMenu: (() -> Void)?
+    var onShowMoveToMenu: (() -> Void)?
 
     override func keyDown(with event: NSEvent) {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
+        if flags.isEmpty, let characters = event.charactersIgnoringModifiers?.lowercased() {
+            switch characters {
+            case "y":
+                onShowContextMenu?()
+                return
+            case "x":
+                onShowMoveToMenu?()
+                return
+            default:
+                break
+            }
+        }
+
         if event.keyCode == 36 || event.keyCode == 76 {
             onActivateRow?(selectedRow)
             return
