@@ -5,6 +5,7 @@ struct FileTableView: NSViewRepresentable {
     let items: [FileItem]
     let sortProperty: SortProperty
     @Binding var selection: Set<FileItem.ID>
+    var onActivate: ((FileItem) -> Void)? = nil
 
     private static let nameColumnID = NSUserInterfaceItemIdentifier("name")
     private static let valueColumnID = NSUserInterfaceItemIdentifier("value")
@@ -15,9 +16,14 @@ struct FileTableView: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let table = NSTableView()
+        let table = FileTable()
         table.dataSource = context.coordinator
         table.delegate = context.coordinator
+        table.target = context.coordinator
+        table.doubleAction = #selector(Coordinator.activateClickedRow(_:))
+        table.onActivateRow = { [weak coordinator = context.coordinator] row in
+            coordinator?.activate(row: row)
+        }
         table.allowsMultipleSelection = false
         table.usesAlternatingRowBackgroundColors = true
         table.rowHeight = 22
@@ -58,6 +64,9 @@ struct FileTableView: NSViewRepresentable {
         if context.coordinator.items != items {
             context.coordinator.items = items
             table.reloadData()
+            DispatchQueue.main.async {
+                table.window?.makeFirstResponder(table)
+            }
         }
 
         table.tableColumn(withIdentifier: Self.valueColumnID)?.title = sortProperty.columnTitle
@@ -105,6 +114,17 @@ struct FileTableView: NSViewRepresentable {
                 items.indices.contains(index) ? items[index].id : nil
             }
             parent.selection = Set(ids)
+        }
+
+        func activate(row: Int) {
+            guard items.indices.contains(row) else { return }
+            parent.onActivate?(items[row])
+        }
+
+        @objc func activateClickedRow(_ sender: Any?) {
+            guard let table = sender as? NSTableView else { return }
+            let row = table.clickedRow >= 0 ? table.clickedRow : table.selectedRow
+            activate(row: row)
         }
 
         private func nameCell(in tableView: NSTableView, item: FileItem) -> NSView {
@@ -184,5 +204,17 @@ struct FileTableView: NSViewRepresentable {
             cell.dots.colors = item.tagColors
             return cell
         }
+    }
+}
+
+private final class FileTable: NSTableView {
+    var onActivateRow: ((Int) -> Void)?
+
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 36 || event.keyCode == 76 {
+            onActivateRow?(selectedRow)
+            return
+        }
+        super.keyDown(with: event)
     }
 }

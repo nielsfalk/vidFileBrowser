@@ -16,7 +16,8 @@ struct FileBrowserView: View {
             FileTableView(
                 items: model.items,
                 sortProperty: model.sortProperty,
-                selection: $model.selection
+                selection: $model.selection,
+                onActivate: model.activate
             )
 
             Divider()
