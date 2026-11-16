@@ -2,6 +2,10 @@
 
 VidFileBrowser is a macOS application that combines a file browser with a video and image player. It is built for quickly reviewing, trimming, labeling and sorting large collections of media files, mostly from the keyboard.
 
+> **Disclaimer**
+>
+> No one has ever read this code. It is completely vibecoded: written by AI agents, accepted when the tests passed, and only ever checked by clicking around in the app. Use it at your own risk. It comes with **no warranty** of any kind, express or implied, including but not limited to correctness, fitness for a particular purpose, or suitability for any purpose. Keep backups of your files; trimming, moving and renaming modify and delete media files.
+
 ## Platform
 
 - macOS 14 (Sonoma) or later, Apple Silicon and Intel
@@ -222,6 +226,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T03 Create the Xcode project: SwiftUI app, macOS 14 deployment target, hardened runtime, no App Sandbox
 - [x] T04 Add git hooks (`commit-msg`, `pre-push`) that enforce the commit rules, plus an `installHooks` task
 - [x] T05 Add a unit test target and a command-line build and test command (`xcodebuild test`)
+- [x] T59 Add a README disclaimer and an MIT license
 - [x] T51 Dependency check on launch: find `libmpv` and `ffmpeg` in `/opt/homebrew` and `/usr/local`, show the install command if missing
 
 ### Window and folder access
@@ -243,7 +248,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T13 Show Finder tag colors as dots in the Tags column
 - [x] T14 Sorting by name, date, label and size, folders always first
 - [x] T15 Sort dropdown and ascending/descending toggle, stored as a global setting
-- [x] T16 Keyboard navigation: Up/Down moves the selection, Enter or double-click opens a folder
+- [x] T16 Keyboard navigation: Up/Down moves the selection, Enter renames, double-click opens a folder
 - [x] T17 Detect playable files (video, image); non-media files are listed but not played
 - [x] T18 Refresh the list automatically when the folder content changes on disk
 - [x] T54 Multiple selection in the file list: Shift+Up/Down, Shift+click and Cmd+click
@@ -308,3 +313,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 - [x] T49 App icon and app metadata
 - [x] T50 Signing (hardened runtime, `disable-library-validation`), notarization and DMG build
+
+## License
+
+MIT, see [LICENSE](LICENSE). The software is provided "as is", without warranty of any kind. Note that mpv and ffmpeg are separate programs installed by the user and are licensed by their respective projects.
