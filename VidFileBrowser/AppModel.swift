@@ -10,6 +10,7 @@ final class AppModel {
     private let trimService: TrimServicing
     private let tagService = FinderTagService()
     private let pasteboard: NSPasteboard
+    private let trashService: FileTrashing
     let favorites: FavoritesStore
     let player: PlayerController
 
@@ -48,6 +49,7 @@ final class AppModel {
         trimService: TrimServicing = TrimService(),
         favorites: FavoritesStore = FavoritesStore(),
         pasteboard: NSPasteboard = .general,
+        trash: FileTrashing = FinderTrash(),
         restoreLastFolder: Bool = true
     ) {
         self.loader = loader
@@ -56,6 +58,7 @@ final class AppModel {
         self.trimService = trimService
         self.favorites = favorites
         self.pasteboard = pasteboard
+        self.trashService = trash
         sortProperty = settings.sortProperty
         sortAscending = settings.sortAscending
 
@@ -212,6 +215,21 @@ final class AppModel {
         guard !items.isEmpty else { return }
         pasteboard.clearContents()
         pasteboard.setString(items.map(\.url.path).joined(separator: "\n"), forType: .string)
+    }
+
+    // MARK: - Trash
+
+    func moveToTrash(_ items: [FileItem]) {
+        guard !items.isEmpty else { return }
+
+        for item in items {
+            do {
+                _ = try trashService.trash(item.url)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+        reload()
     }
 
     // MARK: - Tags

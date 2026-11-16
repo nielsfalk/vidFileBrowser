@@ -195,6 +195,24 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(pasteboard.string(forType: .string), model.items.map(\.url.path).joined(separator: "\n"))
     }
 
+    func testMoveToTrashRemovesTheFile() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+
+        let model = AppModel(
+            settings: AppSettings(defaults: defaults),
+            player: PlayerController(),
+            trash: TestTrash(),
+            restoreLastFolder: false
+        )
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first)
+
+        model.moveToTrash([item])
+
+        XCTAssertTrue(model.items.isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: item.url.path))
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),
@@ -209,5 +227,12 @@ final class AppModelTests: XCTestCase {
         model.open(directory)
 
         XCTAssertEqual(model.items.map(\.name), ["Sub", "a.mkv", "b.mov"])
+    }
+}
+
+private struct TestTrash: FileTrashing {
+    func trash(_ url: URL) throws -> URL? {
+        try FileManager.default.removeItem(at: url)
+        return nil
     }
 }

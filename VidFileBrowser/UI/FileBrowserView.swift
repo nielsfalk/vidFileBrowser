@@ -86,6 +86,10 @@ struct FileBrowserView: View {
         menu.addItem(ClosureMenuItem(title: "Copy Path") { [model] in
             model.copyPaths(of: [item])
         })
+        menu.addItem(.separator())
+        menu.addItem(ClosureMenuItem(title: "Move to Trash") { [model] in
+            model.moveToTrash([item])
+        })
 
         let favorites = model.favorites.folders.compactMap { folder -> (FavoriteFolder, URL)? in
             guard let url = model.favorites.url(for: folder) else { return nil }

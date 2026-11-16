@@ -146,6 +146,12 @@ struct PlayerView: View {
             Button("Copy Path") {
                 model.copyPaths(of: [item])
             }
+
+            Divider()
+
+            Button("Move to Trash") {
+                model.moveToTrash([item])
+            }
         }
 
         Divider()
