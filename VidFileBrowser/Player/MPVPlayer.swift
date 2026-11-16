@@ -150,6 +150,7 @@ final class MPVPlayer: Player {
         library.setOptionString(context, "input-default-bindings", "no")
         library.setOptionString(context, "input-vo-keyboard", "no")
         library.setOptionString(context, "osc", "no")
+        library.setOptionString(context, "load-scripts", "no")
         library.setOptionString(context, "hwdec", "auto-safe")
         // The render API provides the OpenGL context and framebuffer.
         library.setOptionString(context, "vo", "libmpv")
