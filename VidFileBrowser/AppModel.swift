@@ -9,6 +9,7 @@ final class AppModel {
     private let watcher = DirectoryWatcher()
     private let trimService: TrimServicing
     private let tagService = FinderTagService()
+    let favorites: FavoritesStore
     let player: PlayerController
 
     private(set) var directory: URL?
@@ -44,12 +45,14 @@ final class AppModel {
         settings: AppSettings = AppSettings(),
         player: PlayerController? = nil,
         trimService: TrimServicing = TrimService(),
+        favorites: FavoritesStore = FavoritesStore(),
         restoreLastFolder: Bool = true
     ) {
         self.loader = loader
         self.settings = settings
         self.player = player ?? PlayerController(player: PlayerFactory.make())
         self.trimService = trimService
+        self.favorites = favorites
         sortProperty = settings.sortProperty
         sortAscending = settings.sortAscending
 
