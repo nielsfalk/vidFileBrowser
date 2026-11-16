@@ -269,6 +269,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T29 Trim left (`n`) and trim right (`m`) at the current position, then reload the player
 - [x] T30 Show progress during a trim and report errors
 - [x] T57 Add `_t` to the trimmed file name before the first dot
+- [x] T58 Ask to add a keyframe at the beginning by re-encoding when none exists before the trim point
 
 ### Finder tags
 

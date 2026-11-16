@@ -107,6 +107,114 @@ final class TrimServiceTests: XCTestCase {
         XCTAssertEqual(leftovers, ["clip_t.mov"])
     }
 
+    func testMissingKeyframeReencodesWhenConfirmed() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("TrimServiceTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let file = directory.appendingPathComponent("clip.mov")
+        try Data("original".utf8).write(to: file)
+
+        var confirmations = 0
+        var ffmpegCommands: [[String]] = []
+        let runner = FakeRunner(results: [])
+        runner.onRun = { executable, arguments in
+            if executable.contains("ffprobe") {
+                return ProcessResult(status: 0, stdout: "", stderr: "")
+            }
+            ffmpegCommands.append(arguments)
+            let outputPath = arguments.last!
+            try? Data("trimmed".utf8).write(to: URL(fileURLWithPath: outputPath))
+            return ProcessResult(status: 0, stdout: "", stderr: "")
+        }
+        let service = TrimService(
+            ffmpegPath: "/fake/ffmpeg",
+            ffprobePath: "/fake/ffprobe",
+            runner: runner,
+            trash: FakeTrash(),
+            confirmReencode: { _, _ in
+                confirmations += 1
+                return true
+            }
+        )
+
+        try service.trimReplacing(file, range: TrimRange(start: 2, end: 4))
+
+        XCTAssertEqual(confirmations, 1)
+        XCTAssertEqual(ffmpegCommands.count, 1)
+        let command = ffmpegCommands[0]
+        XCTAssertTrue(command.contains("libx264"))
+        XCTAssertEqual(command[command.firstIndex(of: "-c:a")! + 1], "copy")
+        XCTAssertEqual(command[command.firstIndex(of: "-ss")! + 1], "2.000")
+        XCTAssertEqual(command[command.firstIndex(of: "-t")! + 1], "2.000")
+    }
+
+    func testKeyframePromptIsAskedOnTheMainThread() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("TrimServiceTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let file = directory.appendingPathComponent("clip.mov")
+        try Data("original".utf8).write(to: file)
+
+        let asked = expectation(description: "keyframe prompt shown")
+        var askedOnMainThread = false
+        let runner = FakeRunner(results: [])
+        runner.onRun = { executable, arguments in
+            if executable.contains("ffprobe") {
+                return ProcessResult(status: 0, stdout: "", stderr: "")
+            }
+            let outputPath = arguments.last!
+            try? Data("trimmed".utf8).write(to: URL(fileURLWithPath: outputPath))
+            return ProcessResult(status: 0, stdout: "", stderr: "")
+        }
+        let service = TrimService(
+            ffmpegPath: "/fake/ffmpeg",
+            ffprobePath: "/fake/ffprobe",
+            runner: runner,
+            trash: FakeTrash(),
+            confirmReencode: { _, _ in
+                askedOnMainThread = Thread.isMainThread
+                asked.fulfill()
+                return true
+            }
+        )
+
+        DispatchQueue.global().async {
+            try? service.trimReplacing(file, range: TrimRange(start: 2, end: 4))
+        }
+        wait(for: [asked], timeout: 5)
+
+        XCTAssertTrue(askedOnMainThread)
+    }
+
+    func testMissingKeyframeIsAnErrorWhenDeclined() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("TrimServiceTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let file = directory.appendingPathComponent("clip.mov")
+        try Data("original".utf8).write(to: file)
+
+        let trash = FakeTrash()
+        let service = TrimService(
+            ffmpegPath: "/fake/ffmpeg",
+            ffprobePath: "/fake/ffprobe",
+            runner: FakeRunner(results: [ProcessResult(status: 0, stdout: "", stderr: "")]),
+            trash: trash,
+            confirmReencode: { _, _ in false }
+        )
+
+        XCTAssertThrowsError(try service.trimReplacing(file, range: TrimRange(start: 2, end: 4))) { error in
+            XCTAssertEqual(error as? TrimError, .noKeyframe)
+        }
+        XCTAssertTrue(trash.trashedURLs.isEmpty)
+        XCTAssertEqual(try String(contentsOf: file, encoding: .utf8), "original")
+    }
+
     func testTrimReplacingKeepsTheOriginalOnFailure() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("TrimServiceTests-\(UUID().uuidString)", isDirectory: true)

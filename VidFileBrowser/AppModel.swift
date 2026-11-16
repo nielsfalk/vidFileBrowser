@@ -64,7 +64,7 @@ final class AppModel {
         loader: DirectoryLoader = DirectoryLoader(),
         settings: AppSettings = AppSettings(),
         player: PlayerController? = nil,
-        trimService: TrimServicing = TrimService(),
+        trimService: TrimServicing = TrimService(confirmReencode: KeyframePrompt.confirm),
         favorites: FavoritesStore = FavoritesStore(),
         pasteboard: NSPasteboard = .general,
         trash: FileTrashing = FinderTrash(),

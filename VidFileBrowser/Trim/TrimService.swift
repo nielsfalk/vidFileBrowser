@@ -56,17 +56,20 @@ final class TrimService: TrimServicing {
     private let ffprobePath: String?
     private let runner: ProcessRunning
     private let trash: FileTrashing
+    private let confirmReencode: ((URL, TrimRange) -> Bool)?
 
     init(
         ffmpegPath: String? = DependencyLocator.ffmpegPath(),
         ffprobePath: String? = DependencyLocator.ffprobePath(),
         runner: ProcessRunning = ProcessRunner(),
-        trash: FileTrashing = FinderTrash()
+        trash: FileTrashing = FinderTrash(),
+        confirmReencode: ((URL, TrimRange) -> Bool)? = nil
     ) {
         self.ffmpegPath = ffmpegPath
         self.ffprobePath = ffprobePath
         self.runner = runner
         self.trash = trash
+        self.confirmReencode = confirmReencode
     }
 
     func keyframe(atOrBefore time: Double, in url: URL, searchWindow: Double = 10) throws -> Double {
@@ -122,7 +125,14 @@ final class TrimService: TrimServicing {
 
         defer { try? FileManager.default.removeItem(at: temp) }
 
-        try trim(input: url, range: range, output: temp)
+        do {
+            try trim(input: url, range: range, output: temp)
+        } catch TrimError.noKeyframe {
+            guard askForReencode(url: url, range: range) else {
+                throw TrimError.noKeyframe
+            }
+            try trimReencoding(input: url, range: range, output: temp)
+        }
 
         let trimmedName = TrimNaming.trimmedName(for: url.lastPathComponent)
         var destination = directory.appendingPathComponent(trimmedName)
@@ -143,6 +153,54 @@ final class TrimService: TrimServicing {
             throw error
         }
         return destination
+    }
+
+    /// The confirmation is UI, so it must run on the main thread even though
+    /// trimming itself happens in the background.
+    private func askForReencode(url: URL, range: TrimRange) -> Bool {
+        guard let confirmReencode else { return false }
+        if Thread.isMainThread {
+            return confirmReencode(url, range)
+        }
+
+        var confirmed = false
+        DispatchQueue.main.sync {
+            confirmed = confirmReencode(url, range)
+        }
+        return confirmed
+    }
+
+    /// Accurate cut that re-encodes, so the trimmed file starts with a keyframe.
+    func trimReencoding(input: URL, range: TrimRange, output: URL) throws {
+        guard range.duration > 0.05 else { throw TrimError.invalidRange }
+        guard let ffmpegPath else { throw TrimError.ffmpegMissing }
+
+        let result = try runner.run(
+            ffmpegPath,
+            arguments: Self.reencodeArguments(input: input, range: range, output: output)
+        )
+        guard result.succeeded else {
+            throw TrimError.failed(result.stderr.isEmpty ? "ffmpeg failed." : result.stderr)
+        }
+    }
+
+    static func reencodeArguments(input: URL, range: TrimRange, output: URL) -> [String] {
+        [
+            "-hide_banner",
+            "-loglevel", "error",
+            "-y",
+            "-ss", timeString(range.start),
+            "-i", input.path,
+            "-t", timeString(range.duration),
+            "-map", "0:v:0",
+            "-map", "0:a?",
+            "-c:v", "libx264",
+            "-preset", "veryfast",
+            "-crf", "18",
+            "-c:a", "copy",
+            "-movflags", "+faststart",
+            output.path
+        ]
     }
 
     static func trimArguments(input: URL, start: Double, duration: Double, output: URL) -> [String] {
