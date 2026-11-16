@@ -71,6 +71,76 @@ final class TrimServiceTests: XCTestCase {
             XCTAssertEqual(error as? TrimError, .invalidRange)
         }
     }
+    func testTrimReplacingSwapsTheFileAndTrashesTheOriginal() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("TrimServiceTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let file = directory.appendingPathComponent("clip.mov")
+        try Data("original".utf8).write(to: file)
+
+        let trash = FakeTrash()
+        let runner = FakeRunner(results: [])
+        runner.onRun = { executable, arguments in
+            if executable.contains("ffprobe") {
+                return ProcessResult(status: 0, stdout: "0.0\n", stderr: "")
+            }
+            let outputPath = arguments.last!
+            try? Data("trimmed".utf8).write(to: URL(fileURLWithPath: outputPath))
+            return ProcessResult(status: 0, stdout: "", stderr: "")
+        }
+        let service = TrimService(
+            ffmpegPath: "/fake/ffmpeg",
+            ffprobePath: "/fake/ffprobe",
+            runner: runner,
+            trash: trash
+        )
+
+        try service.trimReplacing(file, range: TrimRange(start: 1, end: 2))
+
+        XCTAssertEqual(trash.trashedURLs, [file])
+        XCTAssertEqual(try String(contentsOf: file, encoding: .utf8), "trimmed")
+        let leftovers = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+        XCTAssertEqual(leftovers, ["clip.mov"])
+    }
+
+    func testTrimReplacingKeepsTheOriginalOnFailure() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("TrimServiceTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let file = directory.appendingPathComponent("clip.mov")
+        try Data("original".utf8).write(to: file)
+
+        let trash = FakeTrash()
+        let runner = FakeRunner(results: [
+            ProcessResult(status: 0, stdout: "0.0\n", stderr: ""),
+            ProcessResult(status: 1, stdout: "", stderr: "boom")
+        ])
+        let service = TrimService(
+            ffmpegPath: "/fake/ffmpeg",
+            ffprobePath: "/fake/ffprobe",
+            runner: runner,
+            trash: trash
+        )
+
+        XCTAssertThrowsError(try service.trimReplacing(file, range: TrimRange(start: 1, end: 2)))
+
+        XCTAssertTrue(trash.trashedURLs.isEmpty)
+        XCTAssertEqual(try String(contentsOf: file, encoding: .utf8), "original")
+    }
+}
+
+private final class FakeTrash: FileTrashing {
+    private(set) var trashedURLs: [URL] = []
+
+    func trash(_ url: URL) throws -> URL? {
+        trashedURLs.append(url)
+        try FileManager.default.removeItem(at: url)
+        return nil
+    }
 }
 
 private final class FakeRunner: ProcessRunning {
@@ -81,6 +151,7 @@ private final class FakeRunner: ProcessRunning {
 
     private var results: [ProcessResult]
     private(set) var commands: [Command] = []
+    var onRun: ((String, [String]) -> ProcessResult)?
 
     init(results: [ProcessResult]) {
         self.results = results
@@ -88,6 +159,9 @@ private final class FakeRunner: ProcessRunning {
 
     func run(_ executable: String, arguments: [String]) throws -> ProcessResult {
         commands.append(Command(executable: executable, arguments: arguments))
+        if let onRun {
+            return onRun(executable, arguments)
+        }
         guard !results.isEmpty else {
             return ProcessResult(status: 0, stdout: "", stderr: "")
         }

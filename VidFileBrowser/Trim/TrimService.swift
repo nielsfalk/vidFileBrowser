@@ -30,21 +30,37 @@ enum TrimError: LocalizedError, Equatable {
     }
 }
 
+protocol FileTrashing {
+    /// Moves the file to the Trash and returns where it ended up, if known.
+    func trash(_ url: URL) throws -> URL?
+}
+
+struct FinderTrash: FileTrashing {
+    func trash(_ url: URL) throws -> URL? {
+        var resulting: NSURL?
+        try FileManager.default.trashItem(at: url, resultingItemURL: &resulting)
+        return resulting as URL?
+    }
+}
+
 /// Cuts a video without re-encoding. The start is snapped back to the nearest
 /// keyframe, so the cut stays lossless.
 final class TrimService {
     private let ffmpegPath: String?
     private let ffprobePath: String?
     private let runner: ProcessRunning
+    private let trash: FileTrashing
 
     init(
         ffmpegPath: String? = DependencyLocator.ffmpegPath(),
         ffprobePath: String? = DependencyLocator.ffprobePath(),
-        runner: ProcessRunning = ProcessRunner()
+        runner: ProcessRunning = ProcessRunner(),
+        trash: FileTrashing = FinderTrash()
     ) {
         self.ffmpegPath = ffmpegPath
         self.ffprobePath = ffprobePath
         self.runner = runner
+        self.trash = trash
     }
 
     func keyframe(atOrBefore time: Double, in url: URL, searchWindow: Double = 10) throws -> Double {
@@ -83,6 +99,32 @@ final class TrimService {
         let result = try runner.run(ffmpegPath, arguments: arguments)
         guard result.succeeded else {
             throw TrimError.failed(result.stderr.isEmpty ? "ffmpeg failed." : result.stderr)
+        }
+    }
+
+    /// Cuts into a temporary file next to the original, moves the original to
+    /// the Trash and puts the trimmed file in its place.
+    func trimReplacing(_ url: URL, range: TrimRange) throws {
+        guard range.duration > 0.05 else { throw TrimError.invalidRange }
+
+        let directory = url.deletingLastPathComponent()
+        let base = url.deletingPathExtension().lastPathComponent
+        let fileExtension = url.pathExtension
+        let tempName = ".\(base)-trim-\(UUID().uuidString).\(fileExtension)"
+        let temp = directory.appendingPathComponent(tempName)
+
+        defer { try? FileManager.default.removeItem(at: temp) }
+
+        try trim(input: url, range: range, output: temp)
+
+        let trashed = try trash.trash(url)
+        do {
+            try FileManager.default.moveItem(at: temp, to: url)
+        } catch {
+            if let trashed {
+                try? FileManager.default.moveItem(at: trashed, to: url)
+            }
+            throw error
         }
     }
 
