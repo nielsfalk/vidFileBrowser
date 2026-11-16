@@ -1,8 +1,11 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     private let dependencies: Dependencies
+    @State private var model = AppModel()
     @State private var browserWidth: CGFloat = 440
+    @State private var isDropTarget = false
 
     init(dependencies: Dependencies = DependencyLocator.locate()) {
         self.dependencies = dependencies
@@ -16,36 +19,51 @@ struct ContentView: View {
             breadcrumbBar
             Divider()
             HStack(spacing: 0) {
-                browserPlaceholder
+                FileBrowserView(model: model)
                     .frame(width: browserWidth)
                 SplitHandle(width: $browserWidth, range: 260...800)
                 PlayerPlaceholderView()
             }
         }
         .frame(minWidth: 900, minHeight: 560)
+        .overlay {
+            if isDropTarget {
+                Rectangle()
+                    .strokeBorder(Color.accentColor, lineWidth: 3)
+                    .allowsHitTesting(false)
+            }
+        }
+        .onDrop(of: [UTType.fileURL], isTargeted: $isDropTarget) { providers in
+            guard let provider = providers.first else { return false }
+            provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
+                guard let data = item as? Data,
+                      let url = URL(dataRepresentation: data, relativeTo: nil),
+                      url.hasDirectoryPath
+                else {
+                    return
+                }
+                Task { @MainActor in
+                    model.open(url)
+                }
+            }
+            return true
+        }
     }
 
     private var breadcrumbBar: some View {
         HStack(spacing: 6) {
             Image(systemName: "folder")
                 .foregroundStyle(.secondary)
-            Text("No folder open")
-                .foregroundStyle(.secondary)
+            Text(model.directory?.path ?? "No folder open")
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .foregroundStyle(model.directory == nil ? .secondary : .primary)
             Spacer()
+            Button("Open Folder…", action: chooseFolder)
+                .keyboardShortcut("o", modifiers: .command)
         }
         .padding(.horizontal, 12)
         .frame(height: 36)
-    }
-
-    private var browserPlaceholder: some View {
-        VStack(spacing: 8) {
-            Text("File browser")
-                .font(.headline)
-            Text("Open a folder to see its files.")
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(nsColor: .controlBackgroundColor))
     }
 
     private var dependencyBanner: some View {
@@ -74,6 +92,19 @@ struct ContentView: View {
             missing.append("ffmpeg")
         }
         return missing.joined(separator: " and ")
+    }
+
+    private func chooseFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Open"
+        panel.message = "Choose a folder to browse"
+
+        if panel.runModal() == .OK, let url = panel.url {
+            model.open(url)
+        }
     }
 }
 

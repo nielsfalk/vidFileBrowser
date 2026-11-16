@@ -126,7 +126,7 @@ Behavior:
 - Trimming is lossless (no re-encoding, done with ffmpeg), so it is fast and keeps the original quality and container format. It works for every format ffmpeg can read. The cut point snaps to the nearest keyframe, so it can be slightly off from the exact playback position.
 - The trimmed video replaces the original file under the same name.
 - The original file is moved to the Trash, so it can be restored from there. There is no in-app undo.
-- Finder tags and the file's creation date are kept on the trimmed file.
+- Finder tags and the file's dates (creation and modification date) are preserved on the trimmed file.
 
 ## Favorite folders
 
@@ -221,7 +221,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 ### Window and folder access
 
 - [x] T06 Main window layout: breadcrumb on top, resizable split view with file browser left and player right
-- [ ] T07 Open a folder via an open dialog or by dropping a folder onto the app
+- [x] T07 Open a folder via an open dialog or by dropping a folder onto the app
 - [ ] T08 Remember the last folder, window frame and divider position across launches
 
 ### Breadcrumb path
