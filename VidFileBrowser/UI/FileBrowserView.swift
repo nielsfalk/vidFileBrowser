@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FileBrowserView: View {
     @Bindable var model: AppModel
+    private let sortProperty: SortProperty = .date
 
     var body: some View {
         VStack(spacing: 0) {
@@ -13,21 +14,11 @@ struct FileBrowserView: View {
                     .padding(8)
             }
 
-            List(model.items) { item in
-                HStack(spacing: 8) {
-                    Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
-                        .resizable()
-                        .frame(width: 16, height: 16)
-                    Text(item.name)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                    Spacer()
-                    Text(item.sortValueText(for: .date))
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .listStyle(.inset)
+            FileTableView(
+                items: model.items,
+                sortProperty: sortProperty,
+                selection: $model.selection
+            )
 
             Divider()
 
