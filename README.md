@@ -204,7 +204,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T03 Create the Xcode project: SwiftUI app, macOS 14 deployment target, hardened runtime, no App Sandbox
 - [x] T04 Add git hooks (`commit-msg`, `pre-push`) that enforce the commit rules, plus an `installHooks` task
 - [x] T05 Add a unit test target and a command-line build and test command (`xcodebuild test`)
-- [ ] T51 Dependency check on launch: find `libmpv` and `ffmpeg` in `/opt/homebrew` and `/usr/local`, show the install command if missing
+- [x] T51 Dependency check on launch: find `libmpv` and `ffmpeg` in `/opt/homebrew` and `/usr/local`, show the install command if missing
 
 ### Window and folder access
 
