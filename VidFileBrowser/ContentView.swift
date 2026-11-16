@@ -51,19 +51,34 @@ struct ContentView: View {
     }
 
     private var breadcrumbBar: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             Image(systemName: "folder")
                 .foregroundStyle(.secondary)
-            Text(model.directory?.path ?? "No folder open")
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .foregroundStyle(model.directory == nil ? .secondary : .primary)
+
+            if breadcrumbs.isEmpty {
+                Text("No folder open")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(Array(breadcrumbs.enumerated()), id: \.element.id) { index, crumb in
+                    if index > 0 {
+                        Image(systemName: "chevron.compact.right")
+                            .foregroundStyle(.tertiary)
+                    }
+                    Text(crumb.title)
+                        .lineLimit(1)
+                }
+            }
+
             Spacer()
             Button("Open Folder…", action: chooseFolder)
                 .keyboardShortcut("o", modifiers: .command)
         }
         .padding(.horizontal, 12)
         .frame(height: 36)
+    }
+
+    private var breadcrumbs: [Breadcrumb] {
+        BreadcrumbBuilder.segments(for: model.directory)
     }
 
     private var dependencyBanner: some View {
