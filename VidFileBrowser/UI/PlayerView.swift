@@ -53,6 +53,9 @@ struct PlayerView: View {
         .onAppear {
             model.selectionDidChange()
         }
+        .contextMenu {
+            playerContextMenu
+        }
         .onDisappear {
             hideTask?.cancel()
         }
@@ -80,8 +83,53 @@ struct PlayerView: View {
         return controlsVisible || player.state == .paused || player.state == .ended
     }
 
-    private var message: String? {
-        switch player.state {
+    @ViewBuilder
+    private var playerContextMenu: some View {
+        Button("Play/Pause") {
+            player.togglePlayPause()
+        }
+        .disabled(player.currentURL == nil)
+
+        Button("Trim Left at Playhead") {
+            model.trimLeft()
+        }
+        .disabled(player.currentURL == nil || model.isTrimming)
+
+        Button("Trim Right at Playhead") {
+            model.trimRight()
+        }
+        .disabled(player.currentURL == nil || model.isTrimming)
+
+        if let item = model.selectedItem {
+            Divider()
+
+            Menu("Tags") {
+                ForEach(TagColor.allCases, id: \.self) { color in
+                    Toggle(
+                        FinderTagService.defaultName(for: color),
+                        isOn: Binding(
+                            get: { item.tagColors.contains(color) },
+                            set: { _ in model.toggleTag(color, on: item) }
+                        )
+                    )
+                }
+
+                Divider()
+
+                Button("Remove All Tags") {
+                    model.removeAllTags(from: item)
+                }
+            }
+        }
+
+        Divider()
+
+        Button("Enter Full Screen") {
+            NSApp.keyWindow?.toggleFullScreen(nil)
+        }
+    }
+
+    private var message: String? {        switch player.state {
         case .failed(let reason):
             return reason
         case .idle:
