@@ -101,6 +101,7 @@ struct PlayerView: View {
         .disabled(player.currentURL == nil || model.isTrimming)
 
         if let item = model.selectedItem {
+            let targets = model.selectedItems.isEmpty ? [item] : model.selectedItems
             Divider()
 
             Menu("Tags") {
@@ -108,8 +109,8 @@ struct PlayerView: View {
                     Toggle(
                         FinderTagService.defaultName(for: color),
                         isOn: Binding(
-                            get: { item.tagColors.contains(color) },
-                            set: { _ in model.toggleTag(color, on: item) }
+                            get: { targets.allSatisfy { $0.tagColors.contains(color) } },
+                            set: { _ in model.toggleTag(color, on: targets) }
                         )
                     )
                 }
@@ -117,7 +118,7 @@ struct PlayerView: View {
                 Divider()
 
                 Button("Remove All Tags") {
-                    model.removeAllTags(from: item)
+                    model.removeAllTags(from: targets)
                 }
             }
 
@@ -126,7 +127,7 @@ struct PlayerView: View {
                     ForEach(model.favorites.folders) { folder in
                         if let url = model.favorites.url(for: folder) {
                             Button(folder.name) {
-                                model.move(item, to: url)
+                                model.move(targets, to: url)
                             }
                         }
                     }
@@ -140,17 +141,17 @@ struct PlayerView: View {
             }
 
             Button("Reveal in Finder") {
-                model.revealInFinder([item])
+                model.revealInFinder(targets)
             }
 
             Button("Copy Path") {
-                model.copyPaths(of: [item])
+                model.copyPaths(of: targets)
             }
 
             Divider()
 
             Button("Move to Trash") {
-                model.moveToTrash([item])
+                model.moveToTrash(targets)
             }
         }
 

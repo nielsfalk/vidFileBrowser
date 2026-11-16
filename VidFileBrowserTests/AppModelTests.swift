@@ -355,6 +355,43 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(model.selectedItem?.name, "a.mov")
     }
 
+    func testTagsCanBeToggledForMultipleFiles() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        try Data().write(to: directory.appendingPathComponent("b.mov"))
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+
+        model.toggleTag(.blue, on: model.items)
+        XCTAssertEqual(model.items.map(\.tagColors), [[.blue], [.blue]])
+
+        model.toggleTag(.blue, on: model.items)
+        XCTAssertEqual(model.items.map(\.tagColors), [[], []])
+
+        model.toggleTag(.green, on: model.items)
+        model.removeAllTags(from: model.items)
+        XCTAssertEqual(model.items.map(\.tags), [[], []])
+    }
+
+    func testMultipleFilesCanBeMovedTogether() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        try Data().write(to: directory.appendingPathComponent("b.mov"))
+        let target = directory.appendingPathComponent("Target", isDirectory: true)
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        let items = model.items.filter { $0.name.hasSuffix(".mov") }
+
+        XCTAssertTrue(model.move(items, to: target))
+
+        XCTAssertTrue(model.items.filter { $0.name.hasSuffix(".mov") }.isEmpty)
+        XCTAssertEqual(
+            try FileManager.default.contentsOfDirectory(atPath: target.path).sorted(),
+            ["a.mov", "b.mov"]
+        )
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),

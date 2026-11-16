@@ -389,21 +389,38 @@ final class AppModel {
     // MARK: - Tags
 
     func toggleTag(_ color: TagColor, on item: FileItem) {
-        do {
-            try tagService.toggle(color: color, on: item.url)
-            reload()
-        } catch {
-            errorMessage = error.localizedDescription
+        toggleTag(color, on: [item])
+    }
+
+    func toggleTag(_ color: TagColor, on items: [FileItem]) {
+        guard !items.isEmpty else { return }
+
+        let allHaveColor = items.allSatisfy { $0.tagColors.contains(color) }
+        for item in items where item.tagColors.contains(color) == allHaveColor {
+            do {
+                try tagService.toggle(color: color, on: item.url)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
         }
+        reload()
     }
 
     func removeAllTags(from item: FileItem) {
-        do {
-            try tagService.removeAll(from: item.url)
-            reload()
-        } catch {
-            errorMessage = error.localizedDescription
+        removeAllTags(from: [item])
+    }
+
+    func removeAllTags(from items: [FileItem]) {
+        guard !items.isEmpty else { return }
+
+        for item in items {
+            do {
+                try tagService.removeAll(from: item.url)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
         }
+        reload()
     }
 
     private func performTrim(url: URL, range: TrimRange) {

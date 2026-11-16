@@ -57,14 +57,26 @@ struct FileBrowserView: View {
         .background(Color(nsColor: .controlBackgroundColor))
     }
 
+    private func targets(for item: FileItem) -> [FileItem] {
+        if model.selection.contains(item.id) {
+            let selected = model.selectedItems
+            if !selected.isEmpty {
+                return selected
+            }
+        }
+        return [item]
+    }
+
     private func makeContextMenu(for item: FileItem, menu: NSMenu) {
+        let targets = targets(for: item)
+
         let tagsItem = NSMenuItem(title: "Tags", action: nil, keyEquivalent: "")
         let tagsMenu = NSMenu()
 
         for color in TagColor.allCases {
-            let isOn = item.tagColors.contains(color)
+            let isOn = targets.allSatisfy { $0.tagColors.contains(color) }
             let menuItem = ClosureMenuItem(title: FinderTagService.defaultName(for: color)) { [model] in
-                model.toggleTag(color, on: item)
+                model.toggleTag(color, on: targets)
             }
             menuItem.state = isOn ? .on : .off
             tagsMenu.addItem(menuItem)
@@ -72,32 +84,34 @@ struct FileBrowserView: View {
 
         tagsMenu.addItem(.separator())
         tagsMenu.addItem(ClosureMenuItem(title: "Remove All Tags") { [model] in
-            model.removeAllTags(from: item)
+            model.removeAllTags(from: targets)
         })
 
         tagsItem.submenu = tagsMenu
         menu.addItem(tagsItem)
 
-        menu.addItem(ClosureMenuItem(title: "Rename…") { [model] in
-            if let name = RenamePrompt.run(currentName: item.name) {
-                model.rename(item, to: name)
-            }
-        })
+        if targets.count == 1, let single = targets.first {
+            menu.addItem(ClosureMenuItem(title: "Rename…") { [model] in
+                if let name = RenamePrompt.run(currentName: single.name) {
+                    model.rename(single, to: name)
+                }
+            })
+        }
 
         menu.addItem(.separator())
         menu.addItem(ClosureMenuItem(title: "Reveal in Finder") { [model] in
-            model.revealInFinder([item])
+            model.revealInFinder(targets)
         })
         menu.addItem(ClosureMenuItem(title: "Copy Path") { [model] in
-            model.copyPaths(of: [item])
+            model.copyPaths(of: targets)
         })
         menu.addItem(.separator())
         menu.addItem(ClosureMenuItem(title: "Move to Trash") { [model] in
-            model.moveToTrash([item])
+            model.moveToTrash(targets)
         })
 
         let moveToMenu = NSMenu()
-        makeMoveToMenu(for: item, menu: moveToMenu)
+        makeMoveToMenu(for: targets, menu: moveToMenu)
         if !moveToMenu.items.isEmpty {
             let moveToItem = NSMenuItem(title: "Move to", action: nil, keyEquivalent: "")
             moveToItem.submenu = moveToMenu
@@ -106,10 +120,14 @@ struct FileBrowserView: View {
     }
 
     private func makeMoveToMenu(for item: FileItem, menu: NSMenu) {
+        makeMoveToMenu(for: targets(for: item), menu: menu)
+    }
+
+    private func makeMoveToMenu(for targets: [FileItem], menu: NSMenu) {
         for folder in model.favorites.folders {
             guard let url = model.favorites.url(for: folder) else { continue }
             menu.addItem(ClosureMenuItem(title: folder.name) { [model] in
-                model.move(item, to: url)
+                model.move(targets, to: url)
             })
         }
     }

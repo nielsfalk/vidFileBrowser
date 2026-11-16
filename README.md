@@ -246,7 +246,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T17 Detect playable files (video, image); non-media files are listed but not played
 - [x] T18 Refresh the list automatically when the folder content changes on disk
 - [x] T54 Multiple selection in the file list: Shift+Up/Down, Shift+click and Cmd+click
-- [ ] T55 Apply tags, Move to, Move to Trash and drag and drop to all selected files
+- [x] T55 Apply tags, Move to, Move to Trash and drag and drop to all selected files
 
 ### Player
 
