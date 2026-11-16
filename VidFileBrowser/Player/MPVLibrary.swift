@@ -32,6 +32,38 @@ struct MPVEventProperty {
     var data: UnsafeMutableRawPointer?
 }
 
+/// Mirrors `mpv_render_param` from render.h.
+struct MPVRenderParam {
+    var type: Int32
+    var data: UnsafeMutableRawPointer?
+}
+
+enum MPVRenderParamType {
+    static let invalid: Int32 = 0
+    static let apiType: Int32 = 1
+    static let openGLInitParams: Int32 = 2
+    static let openGLFBO: Int32 = 3
+    static let openGLFlipY: Int32 = 4
+}
+
+typealias MPVGetProcAddressFn = @convention(c) (UnsafeMutableRawPointer?, UnsafePointer<CChar>?) -> UnsafeMutableRawPointer?
+
+/// Mirrors `mpv_opengl_init_params` from render.h.
+struct MPVOpenGLInitParams {
+    var getProcAddress: MPVGetProcAddressFn?
+    var getProcAddressCtx: UnsafeMutableRawPointer?
+}
+
+/// Mirrors `mpv_opengl_fbo` from render.h.
+struct MPVOpenGLFBO {
+    var fbo: Int32
+    var width: Int32
+    var height: Int32
+    var internalFormat: Int32
+}
+
+typealias MPVRenderUpdateFn = @convention(c) (UnsafeMutableRawPointer?) -> Void
+
 /// Minimal dlopen-based binding to `libmpv`, so the app links and starts even
 /// when mpv is not installed. All calls must go through `MPVLibrary`.
 final class MPVLibrary: @unchecked Sendable {
@@ -45,6 +77,10 @@ final class MPVLibrary: @unchecked Sendable {
     typealias ObservePropertyFn = @convention(c) (MPVHandle, UInt64, UnsafePointer<CChar>, Int32) -> Int32
     typealias WaitEventFn = @convention(c) (MPVHandle, Double) -> UnsafeMutableRawPointer?
     typealias ErrorStringFn = @convention(c) (Int32) -> UnsafePointer<CChar>?
+    typealias RenderContextCreateFn = @convention(c) (UnsafeMutableRawPointer?, MPVHandle, UnsafeMutableRawPointer?) -> Int32
+    typealias RenderContextFreeFn = @convention(c) (OpaquePointer?) -> Void
+    typealias RenderContextSetUpdateCallbackFn = @convention(c) (OpaquePointer?, MPVRenderUpdateFn?, UnsafeMutableRawPointer?) -> Void
+    typealias RenderContextRenderFn = @convention(c) (OpaquePointer?, UnsafeMutableRawPointer?) -> Int32
 
     private let dlHandle: UnsafeMutableRawPointer
     private let createFn: CreateFn
@@ -57,6 +93,10 @@ final class MPVLibrary: @unchecked Sendable {
     private let observePropertyFn: ObservePropertyFn
     private let waitEventFn: WaitEventFn
     private let errorStringFn: ErrorStringFn
+    private let renderContextCreateFn: RenderContextCreateFn
+    private let renderContextFreeFn: RenderContextFreeFn
+    private let renderContextSetUpdateCallbackFn: RenderContextSetUpdateCallbackFn
+    private let renderContextRenderFn: RenderContextRenderFn
 
     init?(path: String) {
         guard let dlHandle = dlopen(path, RTLD_NOW | RTLD_LOCAL) else { return nil }
@@ -75,7 +115,11 @@ final class MPVLibrary: @unchecked Sendable {
               let setPropertyString = load("mpv_set_property_string", as: SetPropertyStringFn.self),
               let observeProperty = load("mpv_observe_property", as: ObservePropertyFn.self),
               let waitEvent = load("mpv_wait_event", as: WaitEventFn.self),
-              let errorString = load("mpv_error_string", as: ErrorStringFn.self)
+              let errorString = load("mpv_error_string", as: ErrorStringFn.self),
+              let renderContextCreate = load("mpv_render_context_create", as: RenderContextCreateFn.self),
+              let renderContextFree = load("mpv_render_context_free", as: RenderContextFreeFn.self),
+              let renderContextSetUpdateCallback = load("mpv_render_context_set_update_callback", as: RenderContextSetUpdateCallbackFn.self),
+              let renderContextRender = load("mpv_render_context_render", as: RenderContextRenderFn.self)
         else {
             dlclose(dlHandle)
             return nil
@@ -92,6 +136,10 @@ final class MPVLibrary: @unchecked Sendable {
         observePropertyFn = observeProperty
         waitEventFn = waitEvent
         errorStringFn = errorString
+        renderContextCreateFn = renderContextCreate
+        renderContextFreeFn = renderContextFree
+        renderContextSetUpdateCallbackFn = renderContextSetUpdateCallback
+        renderContextRenderFn = renderContextRender
     }
 
     deinit {
@@ -154,5 +202,27 @@ final class MPVLibrary: @unchecked Sendable {
     func errorString(_ code: Int32) -> String {
         guard let message = errorStringFn(code) else { return "mpv error \(code)" }
         return String(cString: message)
+    }
+
+    /// `params` must point to an array of `MPVRenderParam` terminated by an
+    /// entry with type `MPVRenderParamType.invalid`.
+    func renderContextCreate(_ out: UnsafeMutableRawPointer?, handle: MPVHandle, params: UnsafeMutableRawPointer) -> Int32 {
+        renderContextCreateFn(out, handle, params)
+    }
+
+    func renderContextFree(_ context: OpaquePointer) {
+        renderContextFreeFn(context)
+    }
+
+    func renderContextSetUpdateCallback(
+        _ context: OpaquePointer,
+        callback: MPVRenderUpdateFn?,
+        userdata: UnsafeMutableRawPointer?
+    ) {
+        renderContextSetUpdateCallbackFn(context, callback, userdata)
+    }
+
+    func renderContextRender(_ context: OpaquePointer, params: UnsafeMutableRawPointer) -> Int32 {
+        renderContextRenderFn(context, params)
     }
 }
