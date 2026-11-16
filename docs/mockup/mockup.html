@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>VidFileBrowser mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1400px; height: 900px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-size: 13px; color: #1d1d1f;
+    background: linear-gradient(135deg, #3a6186 0%, #89253e 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .window {
+    width: 1300px; height: 800px; border-radius: 12px; overflow: hidden;
+    background: #fff; box-shadow: 0 30px 80px rgba(0,0,0,.45), 0 0 0 .5px rgba(0,0,0,.4);
+    display: flex; flex-direction: column; position: relative;
+  }
+  /* Title bar + breadcrumb */
+  .titlebar {
+    height: 52px; background: #ececec; border-bottom: 1px solid #d0d0d0;
+    display: flex; align-items: center; padding: 0 16px; gap: 18px; flex-shrink: 0;
+  }
+  .lights { display: flex; gap: 8px; }
+  .lights span { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .lights .r { background: #ff5f57; } .lights .y { background: #febc2e; } .lights .g { background: #28c840; }
+  .crumbs { display: flex; align-items: center; gap: 2px; font-size: 13px; }
+  .crumb { padding: 4px 8px; border-radius: 6px; color: #3c3c43; display: flex; align-items: center; gap: 6px; }
+  .crumb:hover, .crumb.hover { background: rgba(0,0,0,.07); }
+  .crumb.current { font-weight: 600; color: #1d1d1f; }
+  .sep { color: #9a9a9f; font-size: 12px; }
+  .folder-ico { width: 15px; height: 11px; background: #4aa3f0; border-radius: 2px; position: relative; display: inline-block; }
+  .folder-ico::before { content: ""; position: absolute; top: -3px; left: 0; width: 6px; height: 4px; background: #4aa3f0; border-radius: 2px 2px 0 0; }
+  .disk-ico { width: 14px; height: 10px; border: 1.5px solid #6e6e73; border-radius: 2px; display: inline-block; }
+
+  .main { flex: 1; display: flex; min-height: 0; }
+  /* File browser */
+  .browser { width: 440px; background: #f6f6f6; display: flex; flex-direction: column; border-right: 1px solid #d6d6d6; flex-shrink: 0; }
+  .sortbar { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid #e0e0e0; }
+  .sortbar label { color: #6e6e73; font-size: 12px; }
+  .popup {
+    background: #fff; border: .5px solid #c4c4c4; border-radius: 6px; padding: 3px 26px 3px 9px;
+    box-shadow: 0 .5px 1px rgba(0,0,0,.12); position: relative; font-size: 12px;
+  }
+  .popup::after { content: "⌃⌄"; position: absolute; right: 7px; top: 1px; font-size: 9px; line-height: 9px; width: 8px; word-break: break-all; color: #555; }
+  .toggle { background: #fff; border: .5px solid #c4c4c4; border-radius: 6px; padding: 3px 8px; font-size: 12px; box-shadow: 0 .5px 1px rgba(0,0,0,.12); }
+  .count { margin-left: auto; color: #8e8e93; font-size: 11px; }
+  .header, .row { display: grid; grid-template-columns: 1fr 128px 64px; align-items: center; padding: 0 12px; }
+  .header { height: 26px; font-size: 11px; color: #6e6e73; border-bottom: 1px solid #e3e3e3; font-weight: 500; }
+  .header .active { color: #1d1d1f; }
+  .rows { flex: 1; overflow: hidden; }
+  .row { height: 26px; font-size: 13px; }
+  .row:nth-child(even) { background: #efeff1; }
+  .row.sel { background: #0a64d8; color: #fff; border-radius: 5px; margin: 0 5px; padding: 0 7px; }
+  .row.dim { color: #a1a1a6; }
+  .name { display: flex; align-items: center; gap: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ico { width: 16px; height: 13px; border-radius: 2px; flex-shrink: 0; position: relative; }
+  .ico.folder { background: #4aa3f0; }
+  .ico.folder::before { content: ""; position: absolute; top: -3px; left: 0; width: 7px; height: 4px; background: #4aa3f0; border-radius: 2px 2px 0 0; }
+  .ico.video { background: #3b3b40; border-radius: 2px; }
+  .ico.video::after { content: ""; position: absolute; left: 6px; top: 3px; border-left: 6px solid #fff; border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent; }
+  .ico.image { background: linear-gradient(160deg, #7cc8ff 50%, #4caf50 50%); }
+  .ico.doc { background: #fff; border: 1px solid #b8b8bd; width: 12px; height: 15px; margin: 0 2px; }
+  .row.sel .ico.doc { border-color: #fff; }
+  .val { color: #6e6e73; font-variant-numeric: tabular-nums; font-size: 12px; }
+  .row.sel .val { color: #dbe8ff; }
+  .row.dim .val { color: #b5b5ba; }
+  .tags { display: flex; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: -3px; border: 1.5px solid #f6f6f6; }
+  .row:nth-child(even) .dot { border-color: #efeff1; }
+  .row.sel .dot { border-color: #0a64d8; }
+  .red { background: #ff453a; } .orange { background: #ff9f0a; } .yellow { background: #ffd60a; }
+  .green { background: #30d158; } .blue { background: #0a84ff; } .purple { background: #bf5af2; } .gray { background: #98989d; }
+  .divider { width: 1px; cursor: col-resize; }
+
+  /* Player */
+  .player { flex: 1; background: #000; position: relative; overflow: hidden; }
+  .frame {
+    position: absolute; inset: 40px 0 40px 0;
+    background:
+      radial-gradient(circle at 70% 58%, #ffe9a8 0 34px, rgba(255,200,120,.65) 35px, rgba(255,140,80,0) 150px),
+      linear-gradient(180deg, #24305e 0%, #6b4c8a 30%, #e7826b 58%, #f7b26a 66%, #1f3c5a 66.2%, #12263d 100%);
+  }
+  .frame::before { /* mountains */
+    content: ""; position: absolute; left: 0; right: 0; top: 46%; height: 21%;
+    background:
+      linear-gradient(160deg, transparent 48%, #3a2c4d 48.5%) left / 40% 100% no-repeat,
+      linear-gradient(200deg, transparent 48%, #3a2c4d 48.5%) 38% 0 / 30% 100% no-repeat,
+      linear-gradient(155deg, transparent 52%, #47355c 52.5%) 70% 0 / 35% 100% no-repeat,
+      linear-gradient(205deg, transparent 50%, #3a2c4d 50.5%) right / 35% 100% no-repeat;
+  }
+  .frame::after { /* sun reflection */
+    content: ""; position: absolute; left: 66%; top: 68%; width: 8%; height: 22%;
+    background: repeating-linear-gradient(180deg, rgba(255,220,150,.55) 0 3px, transparent 3px 9px);
+    filter: blur(1px); border-radius: 50%;
+  }
+  .controls {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 64px; padding: 0 22px 16px;
+    background: linear-gradient(0deg, rgba(0,0,0,.75), rgba(0,0,0,0));
+    display: flex; align-items: flex-end; gap: 14px; color: #fff; font-size: 12px; font-variant-numeric: tabular-nums;
+  }
+  .bar { flex: 1; height: 5px; background: rgba(255,255,255,.3); border-radius: 3px; position: relative; margin-bottom: 5px; }
+  .bar .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 28%; background: #fff; border-radius: 3px; }
+  .bar .knob { position: absolute; left: 28%; top: 50%; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+
+  /* Context menu */
+  .menu {
+    position: absolute; background: rgba(246,246,246,.96); backdrop-filter: blur(20px);
+    border-radius: 8px; padding: 5px; min-width: 230px; font-size: 13px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35), 0 0 0 .5px rgba(0,0,0,.25);
+    display: none; z-index: 10;
+  }
+  body.menu-open .menu { display: block; }
+  .item { display: flex; align-items: center; padding: 3px 10px; border-radius: 4px; height: 22px; gap: 8px; }
+  .item .k { margin-left: auto; color: #8e8e93; font-size: 12px; }
+  .item .chev { margin-left: auto; color: #6e6e73; font-size: 11px; }
+  .item.hi { background: #0a64d8; color: #fff; }
+  .item.hi .k, .item.hi .chev { color: #fff; }
+  .msep { height: 1px; background: #d8d8dc; margin: 5px 10px; }
+  .item .dots { display: flex; gap: 4px; margin-left: 2px; }
+  .item .dots .dot { margin: 0; border: none; width: 9px; height: 9px; }
+  .hint { position: absolute; z-index: 9; display: none; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+    <div class="crumbs">
+      <div class="crumb"><span class="disk-ico"></span>Macintosh HD</div><span class="sep">›</span>
+      <div class="crumb"><span class="folder-ico"></span>Users</div><span class="sep">›</span>
+      <div class="crumb hover"><span class="folder-ico"></span>niels</div><span class="sep">›</span>
+      <div class="crumb"><span class="folder-ico"></span>Movies</div><span class="sep">›</span>
+      <div class="crumb current"><span class="folder-ico"></span>Holiday 2026</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="browser">
+      <div class="sortbar">
+        <label>Sort by</label>
+        <div class="popup">Date</div>
+        <div class="toggle">↓ Desc</div>
+        <div class="count">14 items</div>
+      </div>
+      <div class="header"><div>Name</div><div class="active">Date Modified ▾</div><div>Tags</div></div>
+      <div class="rows">
+        <div class="row"><div class="name"><span class="ico folder"></span>Exports</div><div class="val">12 Nov 2026, 18:02</div><div class="tags"></div></div>
+        <div class="row"><div class="name"><span class="ico folder"></span>Raw Footage</div><div class="val">08 Nov 2026, 09:41</div><div class="tags"><span class="dot blue"></span></div></div>
+        <div class="row"><div class="name"><span class="ico video"></span>harbour_timelapse.mov</div><div class="val">15 Nov 2026, 21:17</div><div class="tags"><span class="dot green"></span></div></div>
+        <div class="row sel"><div class="name"><span class="ico video"></span>sunset_over_lake.mp4</div><div class="val">15 Nov 2026, 19:48</div><div class="tags"><span class="dot red"></span><span class="dot orange"></span></div></div>
+        <div class="row"><div class="name"><span class="ico video"></span>drone_coastline_4k.mp4</div><div class="val">14 Nov 2026, 16:05</div><div class="tags"><span class="dot red"></span></div></div>
+        <div class="row"><div class="name"><span class="ico image"></span>panorama_ridge.heic</div><div class="val">14 Nov 2026, 12:30</div><div class="tags"><span class="dot yellow"></span></div></div>
+        <div class="row"><div class="name"><span class="ico video"></span>kids_on_beach.mov</div><div class="val">13 Nov 2026, 15:22</div><div class="tags"><span class="dot purple"></span><span class="dot blue"></span><span class="dot green"></span></div></div>
+        <div class="row"><div class="name"><span class="ico video"></span>market_walk.mp4</div><div class="val">13 Nov 2026, 10:11</div><div class="tags"></div></div>
+        <div class="row"><div class="name"><span class="ico image"></span>old_town_square.jpg</div><div class="val">12 Nov 2026, 17:45</div><div class="tags"><span class="dot gray"></span></div></div>
+        <div class="row"><div class="name"><span class="ico video"></span>boat_trip_part1.mp4</div><div class="val">11 Nov 2026, 14:39</div><div class="tags"><span class="dot orange"></span></div></div>
+        <div class="row"><div class="name"><span class="ico video"></span>boat_trip_part2.mp4</div><div class="val">11 Nov 2026, 14:03</div><div class="tags"></div></div>
+        <div class="row dim"><div class="name"><span class="ico doc"></span>packing_list.txt</div><div class="val">09 Nov 2026, 08:15</div><div class="tags"></div></div>
+        <div class="row"><div class="name"><span class="ico image"></span>sunrise_camp.png</div><div class="val">09 Nov 2026, 06:52</div><div class="tags"><span class="dot green"></span></div></div>
+        <div class="row"><div class="name"><span class="ico video"></span>hiking_trail.mov</div><div class="val">08 Nov 2026, 11:27</div><div class="tags"><span class="dot blue"></span></div></div>
+      </div>
+    </div>
+
+    <div class="player">
+      <div class="frame"></div>
+      <div class="controls">
+        <span>01:23</span>
+        <div class="bar"><div class="fill"></div><div class="knob"></div></div>
+        <span>04:56</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context menu (shown with ?menu) -->
+  <div class="menu" style="left: 720px; top: 230px;">
+    <div class="item hi">Move to<span class="chev">▶</span></div>
+    <div class="item">Tags<span class="chev">▶</span></div>
+    <div class="msep"></div>
+    <div class="item">Trim left<span class="k">N</span></div>
+    <div class="item">Trim right<span class="k">M</span></div>
+    <div class="msep"></div>
+    <div class="item">Rename…</div>
+    <div class="item">Reveal in Finder</div>
+    <div class="item">Copy path</div>
+    <div class="msep"></div>
+    <div class="item">Move to Trash</div>
+  </div>
+  <div class="menu" style="left: 950px; top: 230px; min-width: 190px;">
+    <div class="item"><span class="folder-ico"></span>Best of 2026</div>
+    <div class="item hi"><span class="folder-ico"></span>To Edit</div>
+    <div class="item"><span class="folder-ico"></span>Family</div>
+    <div class="item"><span class="folder-ico"></span>Archive</div>
+  </div>
+</div>
+<script>
+  if (location.search.includes('menu')) document.body.classList.add('menu-open');
+</script>
+</body>
+</html>
