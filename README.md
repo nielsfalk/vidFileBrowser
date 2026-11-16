@@ -85,9 +85,17 @@ The file browser sits on the left side of the window and lists all files and fol
 - Selecting a playable file shows it in the player.
 - Non-media files are listed but cannot be played.
 
+### Multiple selection
+
+- **Shift+click** selects a range of files.
+- **Cmd+click** adds a file to the selection or removes it again.
+- **Shift+Up/Down** extends the selection with the keyboard.
+- With several files selected, tags can be set or removed, files can be moved to a favorite folder or to the Trash, and the whole selection can be dragged to another folder or into Finder.
+- Trim, Rename, Reveal in Finder and Copy path always act on the current file only.
+
 ### Drag and drop
 
-Files can be dropped into the file browser (see [Drag and drop, copy and paste](#drag-and-drop-copy-and-paste)).
+Files can be dropped into the file browser (see [Drag and drop, copy and paste](#drag-and-drop-copy-and-paste)). Dragging a file that is part of a multiple selection drags the whole selection.
 
 ## Player
 
@@ -136,7 +144,9 @@ Right-clicking a file in the file browser or in the player opens a context menu 
 - **Copy path**
 - **Move to Trash**
 
-After the current file is moved or trashed, the **next** file in the list is selected and starts playing automatically.
+When multiple files are selected, **Move to**, **Tags** and **Move to Trash** apply to every selected file. The other actions apply to the current file only.
+
+After the selected files are moved or trashed, the **next** file after the selection is selected and starts playing automatically.
 
 ## Fullscreen
 
@@ -147,6 +157,7 @@ After the current file is moved or trashed, the **next** file in the list is sel
 ## Drag and drop, copy and paste
 
 - Files can be dragged and dropped between VidFileBrowser and Finder windows in both directions.
+- Dragging one file of a multiple selection drags all selected files.
 - Copy (`Cmd+C`), cut (`Cmd+X`) and paste (`Cmd+V`) work between VidFileBrowser and Finder.
 - If a file with the same name already exists at the target, a modal conflict dialog is shown with these options:
   - **Replace**: overwrite the existing file
@@ -160,6 +171,7 @@ After the current file is moved or trashed, the **next** file in the list is sel
 | Key | Action |
 |---|---|
 | Up / Down | Select the previous / next file (also in fullscreen) |
+| Shift+Up / Shift+Down | Extend the selection |
 | Enter | Open the selected folder |
 | Space | Play / pause |
 | Left / Right | Skip back / forward 10 seconds |
@@ -208,7 +220,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 ### Window and folder access
 
-- [ ] T06 Main window layout: breadcrumb on top, resizable split view with file browser left and player right
+- [x] T06 Main window layout: breadcrumb on top, resizable split view with file browser left and player right
 - [ ] T07 Open a folder via an open dialog or by dropping a folder onto the app
 - [ ] T08 Remember the last folder, window frame and divider position across launches
 
@@ -227,6 +239,8 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [ ] T16 Keyboard navigation: Up/Down moves the selection, Enter or double-click opens a folder
 - [ ] T17 Detect playable files (video, image); non-media files are listed but not played
 - [ ] T18 Refresh the list automatically when the folder content changes on disk
+- [ ] T54 Multiple selection in the file list: Shift+Up/Down, Shift+click and Cmd+click
+- [ ] T55 Apply tags, Move to, Move to Trash and drag and drop to all selected files
 
 ### Player
 

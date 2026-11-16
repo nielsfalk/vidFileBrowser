@@ -2,49 +2,67 @@ import SwiftUI
 
 struct ContentView: View {
     private let dependencies: Dependencies
+    @State private var browserWidth: CGFloat = 440
 
     init(dependencies: Dependencies = DependencyLocator.locate()) {
         self.dependencies = dependencies
     }
 
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "film.stack")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text("VidFileBrowser")
-                .font(.largeTitle.bold())
-
-            if dependencies.isSatisfied {
-                Label("mpv and ffmpeg found", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-            } else {
-                missingDependencies
+        VStack(spacing: 0) {
+            if !dependencies.isSatisfied {
+                dependencyBanner
+            }
+            breadcrumbBar
+            Divider()
+            HStack(spacing: 0) {
+                browserPlaceholder
+                    .frame(width: browserWidth)
+                SplitHandle(width: $browserWidth, range: 260...800)
+                PlayerPlaceholderView()
             }
         }
-        .padding(32)
-        .frame(minWidth: 640, minHeight: 420)
+        .frame(minWidth: 900, minHeight: 560)
     }
 
-    private var missingDependencies: some View {
-        VStack(spacing: 8) {
-            Label("Missing dependencies", systemImage: "exclamationmark.triangle.fill")
-                .font(.headline)
-                .foregroundStyle(.orange)
-            Text("VidFileBrowser needs mpv for playback and ffmpeg for trimming.")
-            Text(missingTools)
-                .font(.callout)
+    private var breadcrumbBar: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "folder")
                 .foregroundStyle(.secondary)
-            Text(Dependencies.installCommand)
-                .font(.system(.body, design: .monospaced))
-                .textSelection(.enabled)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
-            Text("Install them, then restart the app.")
-                .font(.callout)
+            Text("No folder open")
+                .foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .frame(height: 36)
+    }
+
+    private var browserPlaceholder: some View {
+        VStack(spacing: 8) {
+            Text("File browser")
+                .font(.headline)
+            Text("Open a folder to see its files.")
                 .foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    private var dependencyBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+            Text("Missing dependencies: \(missingTools).")
+            Text(Dependencies.installCommand)
+                .font(.system(.callout, design: .monospaced))
+                .textSelection(.enabled)
+            Spacer()
+            Text("Restart the app after installing.")
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(.orange.opacity(0.12))
     }
 
     private var missingTools: String {
@@ -55,10 +73,10 @@ struct ContentView: View {
         if dependencies.ffmpegPath == nil {
             missing.append("ffmpeg")
         }
-        return "Missing: " + missing.joined(separator: ", ")
+        return missing.joined(separator: " and ")
     }
 }
 
 #Preview {
-    ContentView(dependencies: Dependencies(libmpvPath: nil, ffmpegPath: nil))
+    ContentView()
 }

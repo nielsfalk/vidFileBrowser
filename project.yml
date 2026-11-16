@@ -8,7 +8,7 @@ options:
 
 settings:
   base:
-    SWIFT_VERSION: "6.0"
+    SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     # Xcode disables the hardened runtime for ad-hoc signing, so this only takes
     # effect once a Developer ID identity is set up for notarization (T50).
