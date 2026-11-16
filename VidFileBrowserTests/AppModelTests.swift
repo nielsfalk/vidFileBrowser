@@ -278,6 +278,69 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: source.path))
     }
 
+    func testCopyAndPasteDuplicatesTheFile() throws {
+        try Data().write(to: directory.appendingPathComponent("clip.mov"))
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("AppModelTests-\(UUID().uuidString)"))
+        let model = AppModel(
+            settings: AppSettings(defaults: defaults),
+            player: PlayerController(),
+            pasteboard: pasteboard,
+            conflictResolver: { _ in .keepBoth },
+            restoreLastFolder: false
+        )
+        model.open(directory)
+        model.selection = [try XCTUnwrap(model.items.first).id]
+
+        model.copySelection()
+        XCTAssertTrue(model.paste())
+
+        XCTAssertEqual(model.items.map(\.name).sorted(), ["clip 2.mov", "clip.mov"])
+    }
+
+    func testCutAndPasteMovesTheFile() throws {
+        try Data().write(to: directory.appendingPathComponent("clip.mov"))
+        let target = directory.appendingPathComponent("Target", isDirectory: true)
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("AppModelTests-\(UUID().uuidString)"))
+        let model = AppModel(
+            settings: AppSettings(defaults: defaults),
+            player: PlayerController(),
+            pasteboard: pasteboard,
+            restoreLastFolder: false
+        )
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first { $0.name == "clip.mov" })
+        model.selection = [item.id]
+        model.cutSelection()
+
+        model.open(target)
+        XCTAssertTrue(model.paste())
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: item.url.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: target.appendingPathComponent("clip.mov").path))
+    }
+
+    func testPasteUsesFinderFilesOnThePasteboard() throws {
+        let source = directory.deletingLastPathComponent()
+            .appendingPathComponent("FinderFile-\(UUID().uuidString).mov")
+        try Data().write(to: source)
+        defer { try? FileManager.default.removeItem(at: source) }
+
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("AppModelTests-\(UUID().uuidString)"))
+        FilePasteboard.write([source], to: pasteboard)
+        let model = AppModel(
+            settings: AppSettings(defaults: defaults),
+            player: PlayerController(),
+            pasteboard: pasteboard,
+            restoreLastFolder: false
+        )
+        model.open(directory)
+
+        XCTAssertTrue(model.paste())
+
+        XCTAssertNotNil(model.items.first { $0.name == source.lastPathComponent })
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),

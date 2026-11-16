@@ -9,6 +9,9 @@ struct FileTableView: NSViewRepresentable {
     var buildContextMenu: ((FileItem, NSMenu) -> Void)? = nil
     var buildMoveToMenu: ((FileItem, NSMenu) -> Void)? = nil
     var onDropFiles: (([URL]) -> Bool)? = nil
+    var onCopySelection: (() -> Void)? = nil
+    var onCutSelection: (() -> Void)? = nil
+    var onPaste: (() -> Void)? = nil
 
     private static let nameColumnID = NSUserInterfaceItemIdentifier("name")
     private static let valueColumnID = NSUserInterfaceItemIdentifier("value")
@@ -35,6 +38,15 @@ struct FileTableView: NSViewRepresentable {
         }
         table.onDropFiles = { [weak coordinator = context.coordinator] urls in
             coordinator?.parent.onDropFiles?(urls) ?? false
+        }
+        table.onCopy = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onCopySelection?()
+        }
+        table.onCut = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onCutSelection?()
+        }
+        table.onPaste = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onPaste?()
         }
         table.allowsMultipleSelection = false
         table.usesAlternatingRowBackgroundColors = true
@@ -271,6 +283,9 @@ private final class FileTable: NSTableView {
     var onShowContextMenu: (() -> Void)?
     var onShowMoveToMenu: (() -> Void)?
     var onDropFiles: (([URL]) -> Bool)?
+    var onCopy: (() -> Void)?
+    var onCut: (() -> Void)?
+    var onPaste: (() -> Void)?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -279,6 +294,18 @@ private final class FileTable: NSTableView {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    @objc func copy(_ sender: Any?) {
+        onCopy?()
+    }
+
+    @objc func cut(_ sender: Any?) {
+        onCut?()
+    }
+
+    @objc func paste(_ sender: Any?) {
+        onPaste?()
     }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {

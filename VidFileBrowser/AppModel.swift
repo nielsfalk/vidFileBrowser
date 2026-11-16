@@ -14,6 +14,7 @@ final class AppModel {
     private let fileOperationService = FileOperationService()
     private let conflictResolver: ((FileConflict) -> ConflictResolution)?
     private var applyToAllResolution: ConflictResolution?
+    private var cutURLs: [URL] = []
     let favorites: FavoritesStore
     let player: PlayerController
 
@@ -43,6 +44,10 @@ final class AppModel {
 
     var selectedItem: FileItem? {
         items.first { selection.contains($0.id) }
+    }
+
+    var selectedItems: [FileItem] {
+        items.filter { selection.contains($0.id) }
     }
 
     init(
@@ -286,6 +291,63 @@ final class AppModel {
         guard !items.isEmpty else { return }
         pasteboard.clearContents()
         pasteboard.setString(items.map(\.url.path).joined(separator: "\n"), forType: .string)
+    }
+
+    // MARK: - Clipboard
+
+    func copySelection() {
+        let urls = selectedItems.map(\.url)
+        guard !urls.isEmpty else { return }
+        FilePasteboard.write(urls, to: pasteboard)
+        cutURLs = []
+    }
+
+    func cutSelection() {
+        let urls = selectedItems.map(\.url)
+        guard !urls.isEmpty else { return }
+        FilePasteboard.write(urls, to: pasteboard)
+        cutURLs = urls
+    }
+
+    @discardableResult
+    func paste() -> Bool {
+        guard let directory else { return false }
+        let urls = FilePasteboard.readURLs(from: pasteboard)
+        guard !urls.isEmpty else { return false }
+
+        let isCut = !cutURLs.isEmpty && urls.allSatisfy { cutURLs.contains($0) }
+        let operation: FileOperation = isCut ? .move : .copy
+
+        applyToAllResolution = nil
+        defer { applyToAllResolution = nil }
+
+        do {
+            let results = try fileOperationService.perform(
+                operation,
+                sources: urls,
+                into: directory,
+                resolve: resolveConflict(_:)
+            )
+            cutURLs = []
+            errorMessage = nil
+            reload()
+
+            let pasted = Set<FileItem.ID>(results.compactMap { result -> FileItem.ID? in
+                guard let destination = result.destination else { return nil }
+                return items.first { $0.url == destination }?.id
+            })
+            if !pasted.isEmpty {
+                selection = pasted
+                selectionDidChange()
+            }
+            return true
+        } catch is CancellationError {
+            cutURLs = []
+            return false
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
     }
 
     // MARK: - Trash

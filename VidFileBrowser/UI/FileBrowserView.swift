@@ -20,7 +20,10 @@ struct FileBrowserView: View {
                 onActivate: model.activate,
                 buildContextMenu: makeContextMenu,
                 buildMoveToMenu: makeMoveToMenu,
-                onDropFiles: model.importFiles
+                onDropFiles: model.importFiles,
+                onCopySelection: model.copySelection,
+                onCutSelection: model.cutSelection,
+                onPaste: { model.paste() }
             )
 
             Divider()

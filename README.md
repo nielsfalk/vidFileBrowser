@@ -293,7 +293,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T45 Conflict dialog: Replace, Keep both, Skip, Cancel and Apply to all
 - [x] T46 Drag files from the file browser to Finder
 - [x] T47 Drop files from Finder into the file browser
-- [ ] T48 Copy, cut and paste files with `Cmd+C`, `Cmd+X` and `Cmd+V`, also with Finder
+- [x] T48 Copy, cut and paste files with `Cmd+C`, `Cmd+X` and `Cmd+V`, also with Finder
 
 ### Release
 

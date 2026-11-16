@@ -54,13 +54,20 @@ struct FileOperationService {
         resolve: (FileConflict) -> ConflictResolution
     ) throws -> FileOperationResult {
         let destination = folder.appendingPathComponent(source.lastPathComponent)
-        if destination.standardizedFileURL == source.standardizedFileURL {
+        let isSameFile = destination.standardizedFileURL == source.standardizedFileURL
+        if isSameFile, operation == .move {
             return FileOperationResult(source: source, destination: nil)
         }
 
         var target = destination
         if fileManager.fileExists(atPath: target.path) {
-            switch resolve(FileConflict(source: source, destination: target)) {
+            var resolution = resolve(FileConflict(source: source, destination: target))
+            // Copying a file onto itself must never delete the source.
+            if isSameFile, resolution == .replace {
+                resolution = .keepBoth
+            }
+
+            switch resolution {
             case .cancel:
                 throw CancellationError()
             case .skip:
