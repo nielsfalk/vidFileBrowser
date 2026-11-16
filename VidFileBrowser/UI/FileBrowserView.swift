@@ -21,6 +21,7 @@ struct FileBrowserView: View {
                 buildContextMenu: makeContextMenu,
                 buildMoveToMenu: makeMoveToMenu,
                 onDropFiles: model.importFiles,
+                onShortcut: handleShortcut,
                 onCopySelection: model.copySelection,
                 onCutSelection: model.cutSelection,
                 onPaste: { model.paste() }
@@ -55,6 +56,19 @@ struct FileBrowserView: View {
             .padding(.vertical, 5)
         }
         .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    private func handleShortcut(_ shortcut: BrowserShortcut) {
+        switch shortcut {
+        case .toggleFullScreen:
+            NSApp.keyWindow?.toggleFullScreen(nil)
+        case .exitFullScreen:
+            if NSApp.keyWindow?.styleMask.contains(.fullScreen) == true {
+                NSApp.keyWindow?.toggleFullScreen(nil)
+            }
+        default:
+            model.handle(shortcut)
+        }
     }
 
     private func targets(for item: FileItem) -> [FileItem] {

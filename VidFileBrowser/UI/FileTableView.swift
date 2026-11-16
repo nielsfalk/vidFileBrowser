@@ -9,6 +9,7 @@ struct FileTableView: NSViewRepresentable {
     var buildContextMenu: ((FileItem, NSMenu) -> Void)? = nil
     var buildMoveToMenu: ((FileItem, NSMenu) -> Void)? = nil
     var onDropFiles: (([URL]) -> Bool)? = nil
+    var onShortcut: ((BrowserShortcut) -> Void)? = nil
     var onCopySelection: (() -> Void)? = nil
     var onCutSelection: (() -> Void)? = nil
     var onPaste: (() -> Void)? = nil
@@ -38,6 +39,9 @@ struct FileTableView: NSViewRepresentable {
         }
         table.onDropFiles = { [weak coordinator = context.coordinator] urls in
             coordinator?.parent.onDropFiles?(urls) ?? false
+        }
+        table.onShortcut = { [weak coordinator = context.coordinator] shortcut in
+            coordinator?.parent.onShortcut?(shortcut)
         }
         table.onCopy = { [weak coordinator = context.coordinator] in
             coordinator?.parent.onCopySelection?()
@@ -283,6 +287,7 @@ private final class FileTable: NSTableView {
     var onShowContextMenu: (() -> Void)?
     var onShowMoveToMenu: (() -> Void)?
     var onDropFiles: (([URL]) -> Bool)?
+    var onShortcut: ((BrowserShortcut) -> Void)?
     var onCopy: (() -> Void)?
     var onCut: (() -> Void)?
     var onPaste: (() -> Void)?
@@ -336,6 +341,15 @@ private final class FileTable: NSTableView {
 
     override func keyDown(with event: NSEvent) {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
+        if let shortcut = BrowserShortcut(event: event) {
+            if shortcut == .exitFullScreen, window?.styleMask.contains(.fullScreen) != true {
+                super.keyDown(with: event)
+                return
+            }
+            onShortcut?(shortcut)
+            return
+        }
 
         if flags.isEmpty, let characters = event.charactersIgnoringModifiers?.lowercased() {
             switch characters {

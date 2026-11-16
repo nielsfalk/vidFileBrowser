@@ -122,6 +122,31 @@ final class AppModel {
         playSelectedItem()
     }
 
+    /// Handles playback keys that are also useful while the file browser is
+    /// hidden in full screen.
+    func handle(_ shortcut: BrowserShortcut) {
+        switch shortcut {
+        case .playPause:
+            if player.currentURL != nil || image != nil {
+                player.togglePlayPause()
+            }
+        case .skipBackward10:
+            player.skip(by: -10)
+        case .skipForward10:
+            player.skip(by: 10)
+        case .skipBackward30:
+            player.skip(by: -30)
+        case .skipForward30:
+            player.skip(by: 30)
+        case .trimLeft:
+            trimLeft()
+        case .trimRight:
+            trimRight()
+        case .toggleFullScreen, .exitFullScreen:
+            break
+        }
+    }
+
     func playSelectedItem() {
         guard let item = selectedItem, !item.isDirectory else {
             clearMedia()
