@@ -50,6 +50,16 @@ final class AppModel {
         items.filter { selection.contains($0.id) }
     }
 
+    var playerInfoState: PlayerInfoState? {
+        let selected = selectedItems
+        guard !selected.isEmpty else { return .noSelection }
+        guard selected.count == 1 else { return .multiple(selected.count) }
+        guard let item = selected.first else { return .noSelection }
+        if item.isDirectory { return .folder(item.name) }
+        if !item.kind.isPlayable { return .notMedia(item.name) }
+        return nil
+    }
+
     init(
         loader: DirectoryLoader = DirectoryLoader(),
         settings: AppSettings = AppSettings(),
@@ -168,7 +178,8 @@ final class AppModel {
     }
 
     func playSelectedItem() {
-        guard let item = selectedItem, !item.isDirectory else {
+        let selected = selectedItems
+        guard selected.count == 1, let item = selected.first, !item.isDirectory else {
             clearMedia()
             return
         }

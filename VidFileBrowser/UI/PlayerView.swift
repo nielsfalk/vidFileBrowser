@@ -36,6 +36,10 @@ struct PlayerView: View {
                 .transition(.opacity)
             }
 
+            if let info = model.playerInfoState {
+                PlayerInfoView(state: info)
+            }
+
             if model.isTrimming {
                 VStack(spacing: 10) {
                     ProgressView()
@@ -79,6 +83,7 @@ struct PlayerView: View {
     }
 
     private var showsControls: Bool {
+        guard model.playerInfoState == nil else { return false }
         guard player.duration > 0, player.state != .idle else { return false }
         return controlsVisible || player.state == .paused || player.state == .ended
     }

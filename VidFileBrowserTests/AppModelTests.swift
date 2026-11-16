@@ -411,6 +411,41 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(model.selectedItem?.name, "c.mov")
     }
 
+    func testInfoStateForNoSelectionFolderAndNonMedia() throws {
+        try FileManager.default.createDirectory(
+            at: directory.appendingPathComponent("Sub", isDirectory: true),
+            withIntermediateDirectories: true
+        )
+        try Data().write(to: directory.appendingPathComponent("notes.txt"))
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        XCTAssertEqual(model.playerInfoState, .noSelection)
+
+        let folder = try XCTUnwrap(model.items.first { $0.name == "Sub" })
+        model.selection = [folder.id]
+        XCTAssertEqual(model.playerInfoState, .folder("Sub"))
+
+        let notes = try XCTUnwrap(model.items.first { $0.name == "notes.txt" })
+        model.selection = [notes.id]
+        XCTAssertEqual(model.playerInfoState, .notMedia("notes.txt"))
+    }
+
+    func testInfoStateForMultipleSelectionStopsPlayback() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        try Data().write(to: directory.appendingPathComponent("b.mov"))
+
+        let player = PlayerController()
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: player, restoreLastFolder: false)
+        model.open(directory)
+
+        model.selection = Set(model.items.map(\.id))
+        model.selectionDidChange()
+
+        XCTAssertEqual(model.playerInfoState, .multiple(2))
+        XCTAssertNil(player.currentURL)
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),
