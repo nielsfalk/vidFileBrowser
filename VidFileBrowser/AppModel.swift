@@ -150,6 +150,21 @@ final class AppModel {
         trimError = nil
     }
 
+    // MARK: - Moving files
+
+    @discardableResult
+    func move(_ item: FileItem, to folder: URL) -> Bool {
+        do {
+            try FileMover.move(item.url, into: folder)
+            errorMessage = nil
+            reload()
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
     // MARK: - Tags
 
     func toggleTag(_ color: TagColor, on item: FileItem) {

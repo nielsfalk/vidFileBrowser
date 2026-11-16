@@ -72,5 +72,19 @@ struct FileBrowserView: View {
 
         tagsItem.submenu = tagsMenu
         menu.addItem(tagsItem)
+
+        let favorites = model.favorites.folders.compactMap { folder -> (FavoriteFolder, URL)? in
+            guard let url = model.favorites.url(for: folder) else { return nil }
+            return (folder, url)
+        }
+
+        if !favorites.isEmpty {
+            menu.addItem(.separator())
+            for (folder, url) in favorites {
+                menu.addItem(ClosureMenuItem(title: "Move to \(folder.name)") { [model] in
+                    model.move(item, to: url)
+                })
+            }
+        }
     }
 }

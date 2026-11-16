@@ -270,7 +270,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 ### Favorite folders
 
 - [x] T33 Settings window: add, remove and reorder favorite folders (stored as bookmarks so they survive renames and moves)
-- [ ] T34 Move a file into a favorite folder
+- [x] T34 Move a file into a favorite folder
 
 ### Context menu
 

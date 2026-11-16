@@ -111,6 +111,38 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(model.items.first?.tags, [])
     }
 
+    func testMoveToFolderUpdatesTheList() throws {
+        try Data().write(to: directory.appendingPathComponent("clip.mov"))
+        let target = directory.appendingPathComponent("Target", isDirectory: true)
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first { $0.name == "clip.mov" })
+
+        XCTAssertTrue(model.move(item, to: target))
+
+        XCTAssertNil(model.errorMessage)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: target.appendingPathComponent("clip.mov").path))
+        XCTAssertFalse(model.items.contains { $0.name == "clip.mov" })
+    }
+
+    func testMoveConflictShowsAnError() throws {
+        try Data().write(to: directory.appendingPathComponent("clip.mov"))
+        let target = directory.appendingPathComponent("Target", isDirectory: true)
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+        try Data().write(to: target.appendingPathComponent("clip.mov"))
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first { $0.name == "clip.mov" })
+
+        XCTAssertFalse(model.move(item, to: target))
+
+        XCTAssertNotNil(model.errorMessage)
+        XCTAssertTrue(model.items.contains { $0.name == "clip.mov" })
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),
