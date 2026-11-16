@@ -231,7 +231,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 ### File browser
 
-- [ ] T11 Directory model: load files and folders of the current folder with name, date, size and tags
+- [x] T11 Directory model: load files and folders of the current folder with name, date, size and tags
 - [x] T12 File list view (`NSTableView`) with Name, Sort value and Tags columns
 - [x] T13 Show Finder tag colors as dots in the Tags column
 - [x] T14 Sorting by name, date, label and size, folders always first
