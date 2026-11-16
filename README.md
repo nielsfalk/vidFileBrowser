@@ -279,7 +279,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T37 Rename action
 - [x] T38 Reveal in Finder and Copy path actions
 - [x] T39 Move to Trash action
-- [ ] T40 After a move or trash, select the next file and start playing it
+- [x] T40 After a move or trash, select the next file and start playing it
 - [ ] T41 `y` opens the context menu and `x` opens the Move to menu for the current file, navigable with Up/Down/Enter/Esc
 
 ### Fullscreen

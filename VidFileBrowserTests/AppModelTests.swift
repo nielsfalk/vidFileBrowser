@@ -213,6 +213,29 @@ final class AppModelTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: item.url.path))
     }
 
+    func testTrashingSelectsAndPlaysTheNextFile() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        try Data().write(to: directory.appendingPathComponent("b.mov"))
+
+        let player = PlayerController()
+        let model = AppModel(
+            settings: AppSettings(defaults: defaults),
+            player: player,
+            trash: TestTrash(),
+            restoreLastFolder: false
+        )
+        model.open(directory)
+        let first = try XCTUnwrap(model.items.first { $0.name == "a.mov" })
+        model.selection = [first.id]
+        model.selectionDidChange()
+
+        model.moveToTrash([first])
+
+        XCTAssertEqual(model.items.map(\.name), ["b.mov"])
+        XCTAssertEqual(model.items.first.map { model.selection.contains($0.id) }, true)
+        XCTAssertEqual(player.currentURL, model.items.first?.url)
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),

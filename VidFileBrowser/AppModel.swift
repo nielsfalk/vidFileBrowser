@@ -163,7 +163,7 @@ final class AppModel {
         do {
             try FileMover.move(item.url, into: folder)
             errorMessage = nil
-            reload()
+            handleRemoved([item.url])
             return true
         } catch {
             errorMessage = error.localizedDescription
@@ -222,14 +222,35 @@ final class AppModel {
     func moveToTrash(_ items: [FileItem]) {
         guard !items.isEmpty else { return }
 
+        var removed: Set<URL> = []
         for item in items {
             do {
                 _ = try trashService.trash(item.url)
+                removed.insert(item.url)
             } catch {
                 errorMessage = error.localizedDescription
             }
         }
+        handleRemoved(removed)
+    }
+
+    /// Reloads and selects the file that follows the removed ones, so playback
+    /// continues without an extra click.
+    private func handleRemoved(_ removed: Set<URL>) {
+        guard !removed.isEmpty else { return }
+
+        let index = items.firstIndex { removed.contains($0.url) } ?? 0
         reload()
+
+        guard !items.isEmpty else {
+            selection = []
+            player.stop()
+            return
+        }
+
+        let next = items[min(index, items.count - 1)]
+        selection = [next.id]
+        selectionDidChange()
     }
 
     // MARK: - Tags
