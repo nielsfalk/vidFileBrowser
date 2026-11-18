@@ -311,7 +311,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 - [x] T42 Toggle fullscreen with `f` or double-click on the player, leave with `Esc`; fullscreen shows only the player
 - [x] T43 All shortcuts and menus work in fullscreen, including Up/Down file navigation
-- [ ] T61 Scroll the file list to the selected file when leaving fullscreen
+- [x] T61 Scroll the file list to the selected file when leaving fullscreen
 
 ### Drag and drop, copy and paste
 

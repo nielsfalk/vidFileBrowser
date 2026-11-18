@@ -120,12 +120,24 @@ struct FileTableView: NSViewRepresentable {
         if table.selectedRowIndexes != rows {
             table.selectRowIndexes(rows, byExtendingSelection: false)
         }
+
+        // The file browser is recreated when leaving fullscreen. Scroll to the
+        // selection then, so the fullscreen navigation stays visible in the list.
+        if !context.coordinator.didScrollToInitialSelection {
+            context.coordinator.didScrollToInitialSelection = true
+            if let row = rows.first {
+                DispatchQueue.main.async {
+                    table.scrollRowToVisible(row)
+                }
+            }
+        }
     }
 
     final class Coordinator: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate {
         var parent: FileTableView
         var items: [FileItem] = []
         weak var tableView: NSTableView?
+        var didScrollToInitialSelection = false
 
         init(_ parent: FileTableView) {
             self.parent = parent
