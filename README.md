@@ -1,6 +1,6 @@
 # VidFileBrowser
 
-VidFileBrowser is a macOS application that combines a file browser with a video and image player. It is built for quickly reviewing, trimming, labeling and sorting large collections of media files, mostly from the keyboard.
+VidFileBrowser is a macOS application that combines a file browser with a video and image player. It is built for quickly reviewing, trimming, tagging and sorting large collections of media files, mostly from the keyboard.
 
 > **Disclaimer**
 >
@@ -31,7 +31,7 @@ This is the same approach as the [IINA](https://iina.io) player. The app can pla
   - The progress bar is a separate overlay view on top of the mpv view.
 - **ffmpeg** (from Homebrew) for lossless trimming of any format: `ffmpeg -ss <start> -to <end> -i in -map 0 -c copy -avoid_negative_ts make_zero out`. `ffprobe` finds the keyframe the cut snaps to.
 - **ImageIO / NSImage** for images (JPEG, PNG, HEIC, …) with zoom and pan.
-- **Finder integration** through system APIs: tags and label colors via `URLResourceValues` (`tagNames`, `labelNumber`), drag and drop, copy/cut/paste via `NSPasteboard` and `NSItemProvider`.
+- **Finder integration** through system APIs: Finder tags via `URLResourceValues` (`tagNames`) and the `com.apple.metadata:_kMDItemUserTags` attribute, drag and drop, copy/cut/paste via `NSPasteboard` and `NSItemProvider`.
 - **Signing:** hardened runtime with the `com.apple.security.cs.disable-library-validation` entitlement, so the app can load `libmpv` from Homebrew. The app is notarized for distribution.
 
 Licensing: the Homebrew `mpv` build is GPL. If the app is distributed, it should either be open source under the GPL or use an LGPL build of mpv.
@@ -61,6 +61,10 @@ Not recommended: **Electron, Tauri, Flutter and Compose Desktop**. Each requires
 - The divider between the file browser and the player can be resized.
 - On launch, the app reopens the last folder and restores the window size, position and divider position.
 
+### Window title
+
+The window title is `VidFileBrowser`. When exactly one file is selected, it shows the app name and the file name separated by a dash, for example `VidFileBrowser - clip 3.mov`.
+
 ## Breadcrumb path
 
 The breadcrumb path sits at the top of the window and shows the current folder path. Each part of the path can be clicked to jump to that folder.
@@ -77,9 +81,10 @@ The file browser sits on the left side of the window and lists all files and fol
 
 ### Sorting
 
-- A dropdown above the list selects the sort property: **Name**, **Date**, **Label**, **Size**.
+- A dropdown above the list selects the sort property: **Name**, **Date**, **Tags**, **Size**.
 - A toggle next to it switches between ascending and descending order.
 - Folders are always listed before files.
+- Sorting by **Tags** compares the whole combination of tags on a file, not only its first tag. Files with the same tags keep the name order.
 - The sort setting applies to all folders and is remembered across launches.
 
 ### Navigation
@@ -128,9 +133,10 @@ Trimming removes part of the current video, relative to the current playback pos
 Behavior:
 
 - Trimming is lossless (no re-encoding, done with ffmpeg), so it is fast and keeps the original quality and container format. It works for every format ffmpeg can read. The cut point snaps to the nearest keyframe, so it can be slightly off from the exact playback position.
-- The trimmed video replaces the original file under the same name.
+- The trimmed video replaces the original file. `_t` is added to the base name before the first dot, e.g. `clip.mov` becomes `clip_t.mov` (unless the suffix is already there).
 - The original file is moved to the Trash, so it can be restored from there. There is no in-app undo.
 - Finder tags and the file's dates (creation and modification date) are preserved on the trimmed file.
+- The trimmed file keeps its position in the file list, even though the `_t` suffix changes its name.
 
 ## Favorite folders
 
@@ -157,6 +163,7 @@ After the selected files are moved or trashed, the **next** file after the selec
 - Enter or leave fullscreen with `f` or by double-clicking the player.
 - `Esc` leaves fullscreen.
 - In fullscreen the player fills the whole screen. All shortcuts and the context menu keep working, including navigating to the next or previous file with Up/Down.
+- Leaving fullscreen scrolls the file list to the selected file.
 
 ## Drag and drop, copy and paste
 
@@ -235,6 +242,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T07 Open a folder via an open dialog or by dropping a folder onto the app
 - [x] T08 Remember the last folder, window frame and divider position across launches
 - [x] T56 Quit the app when the last window is closed
+- [x] T60 Show the selected file in the window title as `VidFileBrowser - <file>` when exactly one file is selected
 
 ### Breadcrumb path
 
@@ -246,13 +254,15 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T11 Directory model: load files and folders of the current folder with name, date, size and tags
 - [x] T12 File list view (`NSTableView`) with Name, Sort value and Tags columns
 - [x] T13 Show Finder tag colors as dots in the Tags column
-- [x] T14 Sorting by name, date, label and size, folders always first
+- [x] T14 Sorting by name, date, tags and size, folders always first
 - [x] T15 Sort dropdown and ascending/descending toggle, stored as a global setting
 - [x] T16 Keyboard navigation: Up/Down moves the selection, Enter renames, double-click opens a folder
 - [x] T17 Detect playable files (video, image); non-media files are listed but not played
 - [x] T18 Refresh the list automatically when the folder content changes on disk
 - [x] T54 Multiple selection in the file list: Shift+Up/Down, Shift+click and Cmd+click
 - [x] T55 Apply tags, Move to, Move to Trash and drag and drop to all selected files
+- [ ] T62 Sort by tags using the whole combination of tags on a file instead of only its first tag
+- [ ] T63 Call tags tags and never label, in the UI, the README and the code
 
 ### Player
 
@@ -275,10 +285,11 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T30 Show progress during a trim and report errors
 - [x] T57 Add `_t` to the trimmed file name before the first dot
 - [x] T58 Ask to add a keyframe at the beginning by re-encoding when none exists before the trim point
+- [ ] T64 Keep the trimmed file in the same position in the file list when the `_t` suffix changes its name
 
 ### Finder tags
 
-- [x] T31 Tag service: read and write Finder tags and label colors
+- [x] T31 Tag service: read and write Finder tags and their colors
 - [x] T32 Tags submenu: toggle each tag color, "Remove all tags"
 
 ### Favorite folders
@@ -300,6 +311,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 - [x] T42 Toggle fullscreen with `f` or double-click on the player, leave with `Esc`; fullscreen shows only the player
 - [x] T43 All shortcuts and menus work in fullscreen, including Up/Down file navigation
+- [ ] T61 Scroll the file list to the selected file when leaving fullscreen
 
 ### Drag and drop, copy and paste
 

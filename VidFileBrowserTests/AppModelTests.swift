@@ -446,6 +446,38 @@ final class AppModelTests: XCTestCase {
         XCTAssertNil(player.currentURL)
     }
 
+    func testWindowTitleShowsTheSelectedFile() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        try Data().write(to: directory.appendingPathComponent("b.mov"))
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+
+        XCTAssertEqual(model.windowTitle, "VidFileBrowser")
+
+        model.selection = [try XCTUnwrap(model.items.first { $0.name == "a.mov" }).id]
+        XCTAssertEqual(model.windowTitle, "VidFileBrowser - a.mov")
+
+        model.selection = Set(model.items.map(\.id))
+        XCTAssertEqual(model.windowTitle, "VidFileBrowser")
+
+        model.selection = []
+        XCTAssertEqual(model.windowTitle, "VidFileBrowser")
+    }
+
+    func testWindowTitleIgnoresSelectedFolders() throws {
+        try FileManager.default.createDirectory(
+            at: directory.appendingPathComponent("Sub", isDirectory: true),
+            withIntermediateDirectories: true
+        )
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        model.selection = [try XCTUnwrap(model.items.first).id]
+
+        XCTAssertEqual(model.windowTitle, "VidFileBrowser")
+    }
+
     func testListsFolderContentsInSortOrder() throws {
         try FileManager.default.createDirectory(
             at: directory.appendingPathComponent("Sub", isDirectory: true),

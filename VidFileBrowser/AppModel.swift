@@ -4,6 +4,8 @@ import Observation
 
 @Observable
 final class AppModel {
+    static let appName = "VidFileBrowser"
+
     private let loader: DirectoryLoader
     private let settings: AppSettings
     private let watcher = DirectoryWatcher()
@@ -48,6 +50,18 @@ final class AppModel {
 
     var selectedItems: [FileItem] {
         items.filter { selection.contains($0.id) }
+    }
+
+    /// The window title names the selected file, so it is visible in the
+    /// window list, Mission Control and the menu bar.
+    var windowTitle: String {
+        guard selectedItems.count == 1,
+              let item = selectedItems.first,
+              !item.isDirectory
+        else {
+            return Self.appName
+        }
+        return "\(Self.appName) - \(item.name)"
     }
 
     var playerInfoState: PlayerInfoState? {

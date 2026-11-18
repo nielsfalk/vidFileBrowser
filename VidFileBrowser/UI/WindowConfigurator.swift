@@ -4,10 +4,12 @@ import SwiftUI
 struct WindowConfigurator: NSViewRepresentable {
     private static let frameAutosaveName = "VidFileBrowserMainWindow"
 
+    var title: String
     var onFullScreenChange: ((Bool) -> Void)? = nil
 
     func makeNSView(context: Context) -> WindowProbeView {
         let view = WindowProbeView()
+        view.title = title
         view.onWindow = { window in
             window.setFrameAutosaveName(Self.frameAutosaveName)
         }
@@ -16,11 +18,20 @@ struct WindowConfigurator: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: WindowProbeView, context: Context) {
+        nsView.title = title
+        nsView.window?.title = title
         nsView.onFullScreenChange = onFullScreenChange
     }
 }
 
 final class WindowProbeView: NSView {
+    var title: String? {
+        didSet {
+            if let title, window?.title != title {
+                window?.title = title
+            }
+        }
+    }
     var onWindow: ((NSWindow) -> Void)?
     var onFullScreenChange: ((Bool) -> Void)?
     private var observers: [NSObjectProtocol] = []
@@ -29,6 +40,9 @@ final class WindowProbeView: NSView {
         super.viewDidMoveToWindow()
         guard let window else { return }
         onWindow?(window)
+        if let title {
+            window.title = title
+        }
 
         observers.forEach(NotificationCenter.default.removeObserver)
         let center = NotificationCenter.default

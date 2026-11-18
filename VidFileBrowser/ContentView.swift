@@ -38,7 +38,7 @@ struct ContentView: View {
         }
         .frame(minWidth: 900, minHeight: 560)
         .background(
-            WindowConfigurator { fullScreen in
+            WindowConfigurator(title: model.windowTitle) { fullScreen in
                 isFullScreen = fullScreen
             }
             .frame(width: 0, height: 0)
