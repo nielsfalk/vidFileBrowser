@@ -49,11 +49,41 @@ final class FileSorterTests: XCTestCase {
     }
 
     func testTagSort() {
-        let items = [item("none", tagColor: 0), item("red", tagColor: 6), item("gray", tagColor: 1)]
+        let items = [
+            item("none"),
+            item("red", tags: [FileTag(name: "Red", color: .red)]),
+            item("gray", tags: [FileTag(name: "Gray", color: .gray)])
+        ]
 
         let sorted = FileSorter.sorted(items, by: .tag, ascending: true)
 
         XCTAssertEqual(sorted.map(\.name), ["none", "gray", "red"])
+    }
+
+    func testTagSortComparesTheWholeCombination() {
+        let items = [
+            item("z-red", tags: [FileTag(name: "Red", color: .red)]),
+            item("y-blue-red", tags: [FileTag(name: "Blue", color: .blue), FileTag(name: "Red", color: .red)]),
+            item("x-none"),
+            item("w-blue", tags: [FileTag(name: "Blue", color: .blue)])
+        ]
+
+        let sorted = FileSorter.sorted(items, by: .tag, ascending: true)
+
+        XCTAssertEqual(sorted.map(\.name), ["x-none", "w-blue", "y-blue-red", "z-red"])
+    }
+
+    func testTagCombinationIgnoresTheStoredTagOrder() {
+        let blue = FileTag(name: "Blue", color: .blue)
+        let red = FileTag(name: "Red", color: .red)
+        let items = [
+            item("b", tags: [red, blue]),
+            item("a", tags: [blue, red])
+        ]
+
+        let sorted = FileSorter.sorted(items, by: .tag, ascending: true)
+
+        XCTAssertEqual(sorted.map(\.name), ["a", "b"])
     }
 
     func testEqualValuesFallBackToName() {
@@ -70,10 +100,9 @@ final class FileSorterTests: XCTestCase {
         isDirectory: Bool = false,
         date: Date? = nil,
         size: Int64? = nil,
-        tagColor: Int = 0
+        tags: [FileTag] = []
     ) -> FileItem {
-        let tags = tagColor == 0 ? [] : [FileTag(name: "Tag", color: TagColor(rawValue: tagColor))]
-        return FileItem(
+        FileItem(
             url: URL(fileURLWithPath: "/tmp/\(name)"),
             name: name,
             isDirectory: isDirectory,

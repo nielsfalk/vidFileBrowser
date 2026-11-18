@@ -261,7 +261,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T18 Refresh the list automatically when the folder content changes on disk
 - [x] T54 Multiple selection in the file list: Shift+Up/Down, Shift+click and Cmd+click
 - [x] T55 Apply tags, Move to, Move to Trash and drag and drop to all selected files
-- [ ] T62 Sort by tags using the whole combination of tags on a file instead of only its first tag
+- [x] T62 Sort by tags using the whole combination of tags on a file instead of only its first tag
 - [x] T63 Call tags tags and never label, in the UI, the README and the code
 
 ### Player

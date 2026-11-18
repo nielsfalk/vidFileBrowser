@@ -29,10 +29,25 @@ enum FileSorter {
         case .date:
             return compareValues(lhs.modificationDate ?? .distantPast, rhs.modificationDate ?? .distantPast)
         case .tag:
-            return compareValues(lhs.firstTagNumber, rhs.firstTagNumber)
+            return compareTagCombinations(lhs, rhs)
         case .size:
             return compareValues(lhs.size ?? 0, rhs.size ?? 0)
         }
+    }
+
+    /// Compares the complete set of tag names, so files with several tags are
+    /// ordered by the combination and not only by their first tag.
+    private static func compareTagCombinations(_ lhs: FileItem, _ rhs: FileItem) -> ComparisonResult {
+        let left = lhs.sortedTagNames
+        let right = rhs.sortedTagNames
+
+        for (leftName, rightName) in zip(left, right) {
+            let result = leftName.localizedStandardCompare(rightName)
+            if result != .orderedSame {
+                return result
+            }
+        }
+        return compareValues(left.count, right.count)
     }
 
     private static func compareValues<T: Comparable>(_ lhs: T, _ rhs: T) -> ComparisonResult {

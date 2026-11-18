@@ -43,9 +43,10 @@ struct FileItem: Identifiable, Hashable, Sendable {
         tags.compactMap(\.color)
     }
 
-    /// The index of the first Finder tag color, 0 for no tag.
-    var firstTagNumber: Int {
-        tagColors.first?.rawValue ?? 0
+    /// Tag names in a stable order, used to sort by the whole combination of
+    /// tags rather than just the first one.
+    var sortedTagNames: [String] {
+        tags.map(\.name).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
 
     func sortValueText(for property: SortProperty) -> String {
