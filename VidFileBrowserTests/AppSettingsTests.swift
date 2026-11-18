@@ -35,6 +35,12 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertFalse(reloaded.sortAscending)
     }
 
+    func testOldLabelSortSettingIsReadAsTags() {
+        defaults.set("label", forKey: AppSettings.Key.sortProperty)
+
+        XCTAssertEqual(AppSettings(defaults: defaults).sortProperty, .tag)
+    }
+
     func testLayoutSettingsArePersisted() {
         let settings = AppSettings(defaults: defaults)
         XCTAssertEqual(settings.browserWidth, AppSettings.defaultBrowserWidth)
@@ -50,11 +56,11 @@ final class AppSettingsTests: XCTestCase {
 
     func testModelReadsAndWritesSortSettings() {
         let settings = AppSettings(defaults: defaults)
-        settings.sortProperty = .label
+        settings.sortProperty = .tag
         settings.sortAscending = false
 
         let model = AppModel(settings: settings)
-        XCTAssertEqual(model.sortProperty, .label)
+        XCTAssertEqual(model.sortProperty, .tag)
         XCTAssertFalse(model.sortAscending)
 
         model.sortProperty = .name

@@ -17,7 +17,14 @@ final class AppSettings {
     }
 
     var sortProperty: SortProperty {
-        get { SortProperty(rawValue: defaults.string(forKey: Key.sortProperty) ?? "") ?? .date }
+        get {
+            guard let raw = defaults.string(forKey: Key.sortProperty) else { return .date }
+            if let property = SortProperty(rawValue: raw) {
+                return property
+            }
+            // Older versions called the tag sort "label".
+            return raw == "label" ? .tag : .date
+        }
         set { defaults.set(newValue.rawValue, forKey: Key.sortProperty) }
     }
 

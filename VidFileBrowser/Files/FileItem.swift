@@ -3,7 +3,7 @@ import Foundation
 enum SortProperty: String, CaseIterable, Identifiable, Sendable {
     case name
     case date
-    case label
+    case tag
     case size
 
     var id: String { rawValue }
@@ -12,7 +12,7 @@ enum SortProperty: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .name: "Name"
         case .date: "Date"
-        case .label: "Label"
+        case .tag: "Tags"
         case .size: "Size"
         }
     }
@@ -21,7 +21,7 @@ enum SortProperty: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .name: "Name"
         case .date: "Date Modified"
-        case .label: "Label"
+        case .tag: "Tags"
         case .size: "Size"
         }
     }
@@ -43,8 +43,8 @@ struct FileItem: Identifiable, Hashable, Sendable {
         tags.compactMap(\.color)
     }
 
-    /// The Finder label index, 0 for no label.
-    var labelNumber: Int {
+    /// The index of the first Finder tag color, 0 for no tag.
+    var firstTagNumber: Int {
         tagColors.first?.rawValue ?? 0
     }
 
@@ -54,7 +54,7 @@ struct FileItem: Identifiable, Hashable, Sendable {
             return ""
         case .date:
             return modificationDate?.formatted(date: .abbreviated, time: .shortened) ?? "—"
-        case .label:
+        case .tag:
             let names = tags.map(\.name)
             return names.isEmpty ? "—" : names.joined(separator: ", ")
         case .size:

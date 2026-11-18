@@ -28,8 +28,8 @@ enum FileSorter {
             return lhs.name.localizedStandardCompare(rhs.name)
         case .date:
             return compareValues(lhs.modificationDate ?? .distantPast, rhs.modificationDate ?? .distantPast)
-        case .label:
-            return compareValues(lhs.labelNumber, rhs.labelNumber)
+        case .tag:
+            return compareValues(lhs.firstTagNumber, rhs.firstTagNumber)
         case .size:
             return compareValues(lhs.size ?? 0, rhs.size ?? 0)
         }

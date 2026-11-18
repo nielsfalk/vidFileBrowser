@@ -48,10 +48,10 @@ final class FileSorterTests: XCTestCase {
         XCTAssertEqual(sorted.map(\.name), ["folder", "small", "big"])
     }
 
-    func testLabelSort() {
-        let items = [item("none", label: 0), item("red", label: 6), item("gray", label: 1)]
+    func testTagSort() {
+        let items = [item("none", tagColor: 0), item("red", tagColor: 6), item("gray", tagColor: 1)]
 
-        let sorted = FileSorter.sorted(items, by: .label, ascending: true)
+        let sorted = FileSorter.sorted(items, by: .tag, ascending: true)
 
         XCTAssertEqual(sorted.map(\.name), ["none", "gray", "red"])
     }
@@ -70,9 +70,9 @@ final class FileSorterTests: XCTestCase {
         isDirectory: Bool = false,
         date: Date? = nil,
         size: Int64? = nil,
-        label: Int = 0
+        tagColor: Int = 0
     ) -> FileItem {
-        let tags = label == 0 ? [] : [FileTag(name: "label", color: TagColor(rawValue: label))]
+        let tags = tagColor == 0 ? [] : [FileTag(name: "Tag", color: TagColor(rawValue: tagColor))]
         return FileItem(
             url: URL(fileURLWithPath: "/tmp/\(name)"),
             name: name,
