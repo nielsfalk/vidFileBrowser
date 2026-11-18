@@ -31,18 +31,22 @@ final class AppModel {
 
     var sortProperty: SortProperty {
         didSet {
+            clearPinnedPosition()
             settings.sortProperty = sortProperty
             resort()
         }
     }
     var sortAscending: Bool {
         didSet {
+            clearPinnedPosition()
             settings.sortAscending = sortAscending
             resort()
         }
     }
 
     private var allItems: [FileItem] = []
+    private var pinnedItemURL: URL?
+    private var pinnedIndex: Int?
 
     var selectedItem: FileItem? {
         items.first { selection.contains($0.id) }
@@ -111,6 +115,7 @@ final class AppModel {
 
         directory = url
         settings.lastFolderPath = url.path
+        clearPinnedPosition()
         selection = []
         reload()
         watcher.watch(url) { [weak self] in
@@ -338,6 +343,9 @@ final class AppModel {
         }
 
         errorMessage = nil
+        if pinnedItemURL == item.url {
+            clearPinnedPosition()
+        }
         let wasPlaying = player.currentURL == item.url
         reload()
 
@@ -441,6 +449,9 @@ final class AppModel {
     /// continues without an extra click.
     private func handleRemoved(_ removed: Set<URL>) {
         guard !removed.isEmpty else { return }
+        if let pinnedItemURL, removed.contains(pinnedItemURL) {
+            clearPinnedPosition()
+        }
 
         let index = items.firstIndex { removed.contains($0.url) } ?? 0
         reload()
@@ -496,6 +507,7 @@ final class AppModel {
     private func performTrim(url: URL, range: TrimRange) {
         guard range.duration > 0.05, !isTrimming else { return }
 
+        let itemIndex = items.firstIndex { $0.url == url }
         isTrimming = true
         trimError = nil
         let service = trimService
@@ -506,6 +518,10 @@ final class AppModel {
                 DispatchQueue.main.async {
                     guard let self else { return }
                     self.isTrimming = false
+                    if let itemIndex {
+                        self.pinnedItemURL = trimmedURL
+                        self.pinnedIndex = itemIndex
+                    }
                     self.reload()
                     if let item = self.items.first(where: { $0.url == trimmedURL }) {
                         self.selection = [item.id]
@@ -523,8 +539,24 @@ final class AppModel {
     }
 
     private func resort() {
-        items = FileSorter.sorted(allItems, by: sortProperty, ascending: sortAscending)
+        var sorted = FileSorter.sorted(allItems, by: sortProperty, ascending: sortAscending)
+
+        // A trim renames the file with `_t`. Keep it at its old row instead of
+        // letting the new name move it elsewhere in the sorted list.
+        if let pinnedItemURL, let pinnedIndex,
+           let index = sorted.firstIndex(where: { $0.url == pinnedItemURL }),
+           index != pinnedIndex {
+            let item = sorted.remove(at: index)
+            sorted.insert(item, at: min(pinnedIndex, sorted.count))
+        }
+
+        items = sorted
         let visible = Set(items.map(\.id))
         selection = selection.intersection(visible)
+    }
+
+    private func clearPinnedPosition() {
+        pinnedItemURL = nil
+        pinnedIndex = nil
     }
 }

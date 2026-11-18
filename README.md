@@ -285,7 +285,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T30 Show progress during a trim and report errors
 - [x] T57 Add `_t` to the trimmed file name before the first dot
 - [x] T58 Ask to add a keyframe at the beginning by re-encoding when none exists before the trim point
-- [ ] T64 Keep the trimmed file in the same position in the file list when the `_t` suffix changes its name
+- [x] T64 Keep the trimmed file in the same position in the file list when the `_t` suffix changes its name
 
 ### Finder tags
 

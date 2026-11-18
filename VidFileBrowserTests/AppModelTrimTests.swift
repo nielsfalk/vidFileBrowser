@@ -57,6 +57,32 @@ final class AppModelTrimTests: XCTestCase {
         XCTAssertEqual(model.player.currentURL, trimmed.url)
     }
 
+    func testTrimKeepsTheItemAtItsListPosition() throws {
+        let orderDirectory = directory.appendingPathComponent("Order", isDirectory: true)
+        try FileManager.default.createDirectory(at: orderDirectory, withIntermediateDirectories: true)
+        try Data().write(to: orderDirectory.appendingPathComponent("b.mov"))
+        try Data().write(to: orderDirectory.appendingPathComponent("b-a.mov"))
+
+        let trimmer = RecordingTrimmer()
+        let model = try makeModel(trimmer: trimmer, in: orderDirectory)
+        model.sortProperty = .name
+        model.sortAscending = true
+
+        XCTAssertEqual(model.items.map(\.name), ["b-a.mov", "b.mov"])
+        let target = try XCTUnwrap(model.items.first { $0.name == "b.mov" })
+        model.selection = [target.id]
+        model.selectionDidChange()
+
+        model.trimLeft()
+        try waitForTrim(model)
+
+        // Without pinning, the new name would move the file to the first row.
+        XCTAssertEqual(model.items.map(\.name), ["b-a.mov", "b_t.mov"])
+
+        model.sortProperty = .name
+        XCTAssertEqual(model.items.map(\.name), ["b_t.mov", "b-a.mov"])
+    }
+
     func testTrimErrorIsSurfaced() throws {
         let trimmer = RecordingTrimmer()
         trimmer.error = TrimError.failed("boom")
@@ -72,6 +98,13 @@ final class AppModelTrimTests: XCTestCase {
     }
 
     private func makeModel(trimmer: RecordingTrimmer) throws -> AppModel {
+        let model = try makeModel(trimmer: trimmer, in: directory)
+        model.selection = [try XCTUnwrap(model.items.first).id]
+        model.selectionDidChange()
+        return model
+    }
+
+    private func makeModel(trimmer: RecordingTrimmer, in directory: URL) throws -> AppModel {
         let player = PlayerController(player: StubPlayer())
         let model = AppModel(
             settings: AppSettings(defaults: defaults),
@@ -80,8 +113,6 @@ final class AppModelTrimTests: XCTestCase {
             restoreLastFolder: false
         )
         model.open(directory)
-        model.selection = [try XCTUnwrap(model.items.first).id]
-        model.selectionDidChange()
         return model
     }
 
