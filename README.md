@@ -60,6 +60,7 @@ Not recommended: **Electron, Tauri, Flutter and Compose Desktop**. Each requires
 
 - The divider between the file browser and the player can be resized.
 - On launch, the app reopens the last folder and restores the window size, position and divider position.
+- The last viewed file is remembered. If it was in another folder, that folder is opened and the file is selected again.
 
 ### Window title
 
@@ -89,7 +90,7 @@ The file browser sits on the left side of the window and lists all files and fol
 
 ### Navigation
 
-- Up/Down moves the selection.
+- Option+Up/Option+Down moves the selection.
 - Enter or double-click opens a folder.
 - Selecting a playable file shows it in the player.
 - Non-media files are listed but cannot be played.
@@ -98,7 +99,7 @@ The file browser sits on the left side of the window and lists all files and fol
 
 - **Shift+click** selects a range of files.
 - **Cmd+click** adds a file to the selection or removes it again.
-- **Shift+Up/Down** extends the selection with the keyboard.
+- **Shift+Option+Up/Down** extends the selection with the keyboard.
 - With several files selected, tags can be set or removed, files can be moved to a favorite folder or to the Trash, and the whole selection can be dragged to another folder or into Finder.
 - Trim, Rename, Reveal in Finder and Copy path always act on the current file only.
 
@@ -123,6 +124,14 @@ The player sits on the right side of the window and shows the file selected in t
 - Images are displayed fitted to the player area.
 - The user can zoom (pinch, scroll wheel with modifier) and pan (drag) images.
 
+## Automatic tags
+
+In the settings the user can turn on automatic tagging of played files and choose which Finder tag color is added. The option is off by default.
+
+- A file is tagged once it has been played or shown in the player for at least 2 seconds.
+- Turning the option off stops adding the tag. Tags that were already added stay on the files.
+- Changing the tag color only affects tags that are added afterwards.
+
 ## Trimming
 
 Trimming removes part of the current video, relative to the current playback position:
@@ -141,6 +150,8 @@ Behavior:
 ## Favorite folders
 
 In the settings the user can add, remove and reorder favorite folders. Files can be moved into a favorite folder through the **Move to** submenu of the context menu.
+
+Next to the **Open Folder…** button in the breadcrumb bar there is a favorites menu that jumps directly to a favorite folder.
 
 ## Context menu
 
@@ -162,7 +173,7 @@ After the selected files are moved or trashed, the **next** file after the selec
 
 - Enter or leave fullscreen with `f` or by double-clicking the player.
 - `Esc` leaves fullscreen.
-- In fullscreen the player fills the whole screen. All shortcuts and the context menu keep working, including navigating to the next or previous file with Up/Down.
+- In fullscreen the player fills the whole screen. All shortcuts and the context menu keep working, including navigating to the next or previous file with Option+Up/Option+Down.
 - Leaving fullscreen scrolls the file list to the selected file.
 
 ## Drag and drop, copy and paste
@@ -181,10 +192,11 @@ After the selected files are moved or trashed, the **next** file after the selec
 
 | Key | Action |
 |---|---|
-| Up / Down | Select the previous / next file (also in fullscreen) |
-| Shift+Up / Shift+Down | Extend the selection |
+| Option+Up / Option+Down | Select the previous / next file (also in fullscreen) |
+| Shift+Option+Up / Shift+Option+Down | Extend the selection |
 | Enter | Open the selected folder |
 | Space | Play / pause |
+| Up / Down | Skip back / forward 40 seconds |
 | Left / Right | Skip back / forward 10 seconds |
 | `,` / `.` | Skip back / forward 30 seconds |
 | `n` | Trim left (remove everything before the current position) |
@@ -243,6 +255,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T08 Remember the last folder, window frame and divider position across launches
 - [x] T56 Quit the app when the last window is closed
 - [x] T60 Show the selected file in the window title as `VidFileBrowser - <file>` when exactly one file is selected
+- [ ] T68 Remember the last viewed file, open its folder on launch and select the file again
 
 ### Breadcrumb path
 
@@ -256,13 +269,14 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T13 Show Finder tag colors as dots in the Tags column
 - [x] T14 Sorting by name, date, tags and size, folders always first
 - [x] T15 Sort dropdown and ascending/descending toggle, stored as a global setting
-- [x] T16 Keyboard navigation: Up/Down moves the selection, Enter renames, double-click opens a folder
+- [x] T16 Keyboard navigation: move the selection, Enter renames, double-click opens a folder
 - [x] T17 Detect playable files (video, image); non-media files are listed but not played
 - [x] T18 Refresh the list automatically when the folder content changes on disk
-- [x] T54 Multiple selection in the file list: Shift+Up/Down, Shift+click and Cmd+click
+- [x] T54 Multiple selection in the file list: keyboard extension, Shift+click and Cmd+click
 - [x] T55 Apply tags, Move to, Move to Trash and drag and drop to all selected files
 - [x] T62 Sort by tags using the whole combination of tags on a file instead of only its first tag
 - [x] T63 Call tags tags and never label, in the UI, the README and the code
+- [ ] T70 Option+Up/Option+Down moves the file selection, also in fullscreen; Shift+Option+Up/Down extends it
 
 ### Player
 
@@ -275,6 +289,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T23 Show the selected image (ImageIO / NSImage) fitted to the player area
 - [x] T24 Zoom (pinch, scroll wheel with modifier) and pan (drag) for images
 - [x] T25 Playback shortcuts: Space play/pause, Left/Right skip 10 s, `,`/`.` skip 30 s
+- [x] T69 Up/Down skips the playhead back and forward 40 seconds
 
 ### Trimming
 
@@ -292,10 +307,16 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T31 Tag service: read and write Finder tags and their colors
 - [x] T32 Tags submenu: toggle each tag color, "Remove all tags"
 
+### Automatic tags
+
+- [ ] T65 Settings option to tag played files: choose the tag color, off by default
+- [ ] T66 Add the chosen tag to a file after it was viewed in the player for 2 seconds
+
 ### Favorite folders
 
 - [x] T33 Settings window: add, remove and reorder favorite folders (stored as bookmarks so they survive renames and moves)
 - [x] T34 Move a file into a favorite folder
+- [ ] T67 Quick favorites menu next to **Open Folder…** to jump to a favorite folder
 
 ### Context menu
 
@@ -310,7 +331,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 ### Fullscreen
 
 - [x] T42 Toggle fullscreen with `f` or double-click on the player, leave with `Esc`; fullscreen shows only the player
-- [x] T43 All shortcuts and menus work in fullscreen, including Up/Down file navigation
+- [x] T43 All shortcuts and menus work in fullscreen, including file navigation
 - [x] T61 Scroll the file list to the selected file when leaving fullscreen
 
 ### Drag and drop, copy and paste

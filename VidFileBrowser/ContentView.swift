@@ -58,12 +58,8 @@ struct ContentView: View {
         }
         .overlay {
             if isFullScreen {
-                FullScreenKeyView(
-                    onPrevious: model.selectPrevious,
-                    onNext: model.selectNext,
-                    onShortcut: handleShortcut
-                )
-                .allowsHitTesting(false)
+                FullScreenKeyView(onShortcut: handleShortcut)
+                    .allowsHitTesting(false)
             }
         }
         .onDrop(of: [UTType.fileURL], isTargeted: $isDropTarget) { providers in

@@ -11,6 +11,18 @@ struct PlaybackCommands: Commands {
 
             Divider()
 
+            Button("Back 40 Seconds") {
+                skip(by: -40)
+            }
+            .keyboardShortcut(.upArrow, modifiers: [])
+
+            Button("Forward 40 Seconds") {
+                skip(by: 40)
+            }
+            .keyboardShortcut(.downArrow, modifiers: [])
+
+            Divider()
+
             Button("Back 10 Seconds") {
                 skip(by: -10)
             }

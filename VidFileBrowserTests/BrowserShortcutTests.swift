@@ -13,6 +13,8 @@ final class BrowserShortcutTests: XCTestCase {
     }
 
     func testArrowKeys() {
+        XCTAssertEqual(shortcut(character: String(UnicodeScalar(NSUpArrowFunctionKey)!), keyCode: 126), .skipBackward40)
+        XCTAssertEqual(shortcut(character: String(UnicodeScalar(NSDownArrowFunctionKey)!), keyCode: 125), .skipForward40)
         XCTAssertEqual(shortcut(character: String(UnicodeScalar(NSLeftArrowFunctionKey)!), keyCode: 123), .skipBackward10)
         XCTAssertEqual(shortcut(character: String(UnicodeScalar(NSRightArrowFunctionKey)!), keyCode: 124), .skipForward10)
         XCTAssertEqual(shortcut(character: String(UnicodeScalar(27)!), keyCode: 53), .exitFullScreen)

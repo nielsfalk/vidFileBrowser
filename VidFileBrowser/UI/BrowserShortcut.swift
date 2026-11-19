@@ -4,6 +4,8 @@ import AppKit
 /// would otherwise use them for type-select.
 enum BrowserShortcut: Equatable {
     case playPause
+    case skipBackward40
+    case skipForward40
     case skipBackward10
     case skipForward10
     case skipBackward30
@@ -20,6 +22,10 @@ enum BrowserShortcut: Equatable {
         switch event.keyCode {
         case 49:
             self = .playPause
+        case 126:
+            self = .skipBackward40
+        case 125:
+            self = .skipForward40
         case 123:
             self = .skipBackward10
         case 124:

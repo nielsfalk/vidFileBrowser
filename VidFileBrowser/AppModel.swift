@@ -175,6 +175,10 @@ final class AppModel {
             player.skip(by: -30)
         case .skipForward30:
             player.skip(by: 30)
+        case .skipBackward40:
+            player.skip(by: -40)
+        case .skipForward40:
+            player.skip(by: 40)
         case .trimLeft:
             trimLeft()
         case .trimRight:
