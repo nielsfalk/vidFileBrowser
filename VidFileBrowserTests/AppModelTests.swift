@@ -446,6 +446,31 @@ final class AppModelTests: XCTestCase {
         XCTAssertNil(player.currentURL)
     }
 
+    func testOptionNavigationExtendsTheSelection() throws {
+        try Data().write(to: directory.appendingPathComponent("a.mov"))
+        try Data().write(to: directory.appendingPathComponent("b.mov"))
+        try Data().write(to: directory.appendingPathComponent("c.mov"))
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.sortProperty = .name
+        model.open(directory)
+
+        model.selectNext()
+        XCTAssertEqual(model.selectedItems.map(\.name), ["a.mov"])
+
+        model.selectNext(extending: true)
+        XCTAssertEqual(model.selectedItems.map(\.name), ["a.mov", "b.mov"])
+
+        model.selectNext(extending: true)
+        XCTAssertEqual(model.selectedItems.map(\.name), ["a.mov", "b.mov", "c.mov"])
+
+        model.selectPrevious(extending: true)
+        XCTAssertEqual(model.selectedItems.map(\.name), ["a.mov", "b.mov"])
+
+        model.selectNext()
+        XCTAssertEqual(model.selectedItems.map(\.name), ["c.mov"])
+    }
+
     func testWindowTitleShowsTheSelectedFile() throws {
         try Data().write(to: directory.appendingPathComponent("a.mov"))
         try Data().write(to: directory.appendingPathComponent("b.mov"))

@@ -276,7 +276,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T55 Apply tags, Move to, Move to Trash and drag and drop to all selected files
 - [x] T62 Sort by tags using the whole combination of tags on a file instead of only its first tag
 - [x] T63 Call tags tags and never label, in the UI, the README and the code
-- [ ] T70 Option+Up/Option+Down moves the file selection, also in fullscreen; Shift+Option+Up/Down extends it
+- [x] T70 Option+Up/Option+Down moves the file selection, also in fullscreen; Shift+Option+Up/Down extends it
 
 ### Player
 

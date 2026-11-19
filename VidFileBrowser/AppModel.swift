@@ -27,7 +27,14 @@ final class AppModel {
     private(set) var imageURL: URL?
     private(set) var isTrimming = false
     private(set) var trimError: String?
-    var selection: Set<FileItem.ID> = []
+    var selection: Set<FileItem.ID> = [] {
+        didSet {
+            guard !isMovingSelection else { return }
+            let selected = selectedItems
+            selectionAnchor = selected.first?.id
+            selectionFocus = selected.last?.id
+        }
+    }
 
     var sortProperty: SortProperty {
         didSet {
@@ -47,6 +54,9 @@ final class AppModel {
     private var allItems: [FileItem] = []
     private var pinnedItemURL: URL?
     private var pinnedIndex: Int?
+    private var isMovingSelection = false
+    private var selectionAnchor: FileItem.ID?
+    private var selectionFocus: FileItem.ID?
 
     var selectedItem: FileItem? {
         items.first { selection.contains($0.id) }
@@ -151,12 +161,12 @@ final class AppModel {
         playSelectedItem()
     }
 
-    func selectPrevious() {
-        moveSelection(by: -1)
+    func selectPrevious(extending: Bool = false) {
+        moveSelection(by: -1, extending: extending)
     }
 
-    func selectNext() {
-        moveSelection(by: 1)
+    func selectNext(extending: Bool = false) {
+        moveSelection(by: 1, extending: extending)
     }
 
     /// Handles playback keys that are also useful while the file browser is
@@ -183,20 +193,46 @@ final class AppModel {
             trimLeft()
         case .trimRight:
             trimRight()
+        case .selectPrevious:
+            selectPrevious()
+        case .selectNext:
+            selectNext()
+        case .extendPrevious:
+            selectPrevious(extending: true)
+        case .extendNext:
+            selectNext(extending: true)
         case .toggleFullScreen, .exitFullScreen:
             break
         }
     }
 
-    private func moveSelection(by offset: Int) {
+    private func moveSelection(by offset: Int, extending: Bool) {
         guard !items.isEmpty else { return }
 
-        let currentIndex = selectedItem.flatMap { item in
+        let focusIndex = selectionFocus.flatMap { focus in
+            items.firstIndex { $0.id == focus }
+        } ?? selectedItem.flatMap { item in
             items.firstIndex { $0.id == item.id }
         } ?? -1
-        let nextIndex = min(max(currentIndex + offset, 0), items.count - 1)
+        let nextIndex = min(max(focusIndex + offset, 0), items.count - 1)
 
-        selection = [items[nextIndex].id]
+        isMovingSelection = true
+        if extending {
+            let anchorIndex = selectionAnchor.flatMap { anchor in
+                items.firstIndex { $0.id == anchor }
+            } ?? min(max(focusIndex, 0), items.count - 1)
+            let range = min(anchorIndex, nextIndex)...max(anchorIndex, nextIndex)
+
+            selection = Set(items[range].map(\.id))
+            selectionAnchor = items[anchorIndex].id
+            selectionFocus = items[nextIndex].id
+        } else {
+            selection = [items[nextIndex].id]
+            selectionAnchor = items[nextIndex].id
+            selectionFocus = items[nextIndex].id
+        }
+        isMovingSelection = false
+
         selectionDidChange()
     }
 

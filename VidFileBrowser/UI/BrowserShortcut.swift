@@ -14,18 +14,34 @@ enum BrowserShortcut: Equatable {
     case trimRight
     case toggleFullScreen
     case exitFullScreen
+    case selectPrevious
+    case selectNext
+    case extendPrevious
+    case extendNext
 
     init?(event: NSEvent) {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        guard flags.isEmpty else { return nil }
+        let modifiers = flags.subtracting([.function, .numericPad, .capsLock])
+
+        if event.keyCode == 126 || event.keyCode == 125 {
+            let isUp = event.keyCode == 126
+            if modifiers == [.option] {
+                self = isUp ? .selectPrevious : .selectNext
+            } else if modifiers == [.option, .shift] {
+                self = isUp ? .extendPrevious : .extendNext
+            } else if modifiers.isEmpty {
+                self = isUp ? .skipBackward40 : .skipForward40
+            } else {
+                return nil
+            }
+            return
+        }
+
+        guard modifiers.isEmpty else { return nil }
 
         switch event.keyCode {
         case 49:
             self = .playPause
-        case 126:
-            self = .skipBackward40
-        case 125:
-            self = .skipForward40
         case 123:
             self = .skipBackward10
         case 124:

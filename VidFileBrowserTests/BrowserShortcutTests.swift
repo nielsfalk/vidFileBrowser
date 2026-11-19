@@ -20,6 +20,16 @@ final class BrowserShortcutTests: XCTestCase {
         XCTAssertEqual(shortcut(character: String(UnicodeScalar(27)!), keyCode: 53), .exitFullScreen)
     }
 
+    func testOptionArrowsNavigateTheFileList() {
+        let up = String(UnicodeScalar(NSUpArrowFunctionKey)!)
+        let down = String(UnicodeScalar(NSDownArrowFunctionKey)!)
+
+        XCTAssertEqual(shortcut(character: up, keyCode: 126, modifiers: .option), .selectPrevious)
+        XCTAssertEqual(shortcut(character: down, keyCode: 125, modifiers: .option), .selectNext)
+        XCTAssertEqual(shortcut(character: up, keyCode: 126, modifiers: [.option, .shift]), .extendPrevious)
+        XCTAssertEqual(shortcut(character: down, keyCode: 125, modifiers: [.option, .shift]), .extendNext)
+    }
+
     func testUnhandledKeys() {
         XCTAssertNil(shortcut(character: "a", keyCode: 0))
         XCTAssertNil(shortcut(character: "y", keyCode: 16))
@@ -29,8 +39,12 @@ final class BrowserShortcutTests: XCTestCase {
         XCTAssertNil(event(character: "f", keyCode: 3, modifiers: .command).flatMap(BrowserShortcut.init(event:)))
     }
 
-    private func shortcut(character: String, keyCode: UInt16) -> BrowserShortcut? {
-        event(character: character, keyCode: keyCode).flatMap(BrowserShortcut.init(event:))
+    private func shortcut(
+        character: String,
+        keyCode: UInt16,
+        modifiers: NSEvent.ModifierFlags = []
+    ) -> BrowserShortcut? {
+        event(character: character, keyCode: keyCode, modifiers: modifiers).flatMap(BrowserShortcut.init(event:))
     }
 
     private func event(character: String, keyCode: UInt16, modifiers: NSEvent.ModifierFlags = []) -> NSEvent? {
