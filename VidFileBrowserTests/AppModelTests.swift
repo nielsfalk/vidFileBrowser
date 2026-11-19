@@ -60,11 +60,7 @@ final class AppModelTests: XCTestCase {
         model.selection = [item.id]
         model.selectionDidChange()
 
-        let stored = try XCTUnwrap(AppSettings(defaults: defaults).lastViewedFilePath)
-        XCTAssertEqual(
-            URL(fileURLWithPath: stored).resolvingSymlinksInPath().path,
-            videoURL.resolvingSymlinksInPath().path
-        )
+        XCTAssertEqual(AppSettings(defaults: defaults).lastViewedFilePath, item.url.path)
     }
 
     func testLastViewedFileIsRestoredWithItsFolder() throws {
