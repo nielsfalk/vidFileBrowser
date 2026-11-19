@@ -1,11 +1,31 @@
 import AppKit
 import SwiftUI
 
-struct FavoritesSettingsView: View {
+struct SettingsView: View {
     @Bindable var store: FavoritesStore
+
+    @AppStorage(AppSettings.Key.autoTagEnabled) private var autoTagEnabled = false
+    @AppStorage(AppSettings.Key.autoTagColor) private var autoTagColor = TagColor.green.rawValue
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("Tag played files after 2 seconds", isOn: $autoTagEnabled)
+
+                Picker("Tag", selection: $autoTagColor) {
+                    ForEach(TagColor.allCases, id: \.self) { color in
+                        Text(FinderTagService.defaultName(for: color))
+                            .tag(color.rawValue)
+                    }
+                }
+                .pickerStyle(.menu)
+                .fixedSize()
+                .disabled(!autoTagEnabled)
+            }
+            .padding(12)
+
+            Divider()
+
             List {
                 ForEach(store.folders) { folder in
                     HStack(spacing: 8) {
@@ -43,7 +63,7 @@ struct FavoritesSettingsView: View {
             }
             .padding(10)
         }
-        .frame(width: 520, height: 340)
+        .frame(width: 520, height: 420)
     }
 
     private func addFolder() {

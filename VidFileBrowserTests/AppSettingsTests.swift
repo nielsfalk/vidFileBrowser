@@ -54,6 +54,19 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(reloaded.lastFolderPath, "/tmp")
     }
 
+    func testAutoTagSettingsArePersisted() {
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertFalse(settings.autoTagEnabled)
+        XCTAssertEqual(settings.autoTagColor, .green)
+
+        settings.autoTagEnabled = true
+        settings.autoTagColor = .red
+
+        let reloaded = AppSettings(defaults: defaults)
+        XCTAssertTrue(reloaded.autoTagEnabled)
+        XCTAssertEqual(reloaded.autoTagColor, .red)
+    }
+
     func testModelReadsAndWritesSortSettings() {
         let settings = AppSettings(defaults: defaults)
         settings.sortProperty = .tag

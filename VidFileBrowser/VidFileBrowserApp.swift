@@ -23,7 +23,7 @@ struct VidFileBrowserApp: App {
         }
 
         Settings {
-            FavoritesSettingsView(store: favorites)
+            SettingsView(store: favorites)
         }
     }
 }

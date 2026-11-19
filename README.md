@@ -309,7 +309,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 
 ### Automatic tags
 
-- [ ] T65 Settings option to tag played files: choose the tag color, off by default
+- [x] T65 Settings option to tag played files: choose the tag color, off by default
 - [ ] T66 Add the chosen tag to a file after it was viewed in the player for 2 seconds
 
 ### Favorite folders
