@@ -5,6 +5,7 @@ final class AppSettings {
         static let sortProperty = "sortProperty"
         static let sortAscending = "sortAscending"
         static let lastFolderPath = "lastFolderPath"
+        static let lastViewedFilePath = "lastViewedFilePath"
         static let browserWidth = "browserWidth"
         static let autoTagEnabled = "autoTagEnabled"
         static let autoTagColor = "autoTagColor"
@@ -38,6 +39,11 @@ final class AppSettings {
     var lastFolderPath: String? {
         get { defaults.string(forKey: Key.lastFolderPath) }
         set { defaults.set(newValue, forKey: Key.lastFolderPath) }
+    }
+
+    var lastViewedFilePath: String? {
+        get { defaults.string(forKey: Key.lastViewedFilePath) }
+        set { defaults.set(newValue, forKey: Key.lastViewedFilePath) }
     }
 
     var browserWidth: Double {

@@ -50,6 +50,60 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(model.items.isEmpty)
     }
 
+    func testSelectingAFileStoresItAsTheLastViewedFile() throws {
+        let videoURL = directory.appendingPathComponent("clip.mov")
+        try Data().write(to: videoURL)
+
+        let model = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first)
+        model.selection = [item.id]
+        model.selectionDidChange()
+
+        let stored = try XCTUnwrap(AppSettings(defaults: defaults).lastViewedFilePath)
+        XCTAssertEqual(
+            URL(fileURLWithPath: stored).resolvingSymlinksInPath().path,
+            videoURL.resolvingSymlinksInPath().path
+        )
+    }
+
+    func testLastViewedFileIsRestoredWithItsFolder() throws {
+        let otherFolder = directory.appendingPathComponent("other", isDirectory: true)
+        try FileManager.default.createDirectory(at: otherFolder, withIntermediateDirectories: true)
+        let videoURL = otherFolder.appendingPathComponent("clip.mov")
+        try Data().write(to: videoURL)
+
+        // The directory loader canonicalizes URLs (/private/var for temporary
+        // folders), so remember the file through a first model.
+        let observed = AppModel(settings: AppSettings(defaults: defaults), player: PlayerController(), restoreLastFolder: false)
+        observed.open(otherFolder)
+        let storedURL = try XCTUnwrap(observed.items.first { $0.name == "clip.mov" }).url
+
+        let settings = AppSettings(defaults: defaults)
+        settings.lastFolderPath = directory.path
+        settings.lastViewedFilePath = storedURL.path
+
+        let backend = RecordingPlayer()
+        let model = AppModel(settings: settings, player: PlayerController(player: backend))
+
+        XCTAssertEqual(model.directory?.lastPathComponent, "other")
+        XCTAssertEqual(model.selectedItems.map(\.name), ["clip.mov"])
+        XCTAssertEqual(backend.loadedURL, storedURL)
+        XCTAssertFalse(backend.didAutoplay)
+    }
+
+    func testMissingLastViewedFileFallsBackToTheLastFolder() {
+        let settings = AppSettings(defaults: defaults)
+        settings.lastFolderPath = directory.path
+        settings.lastViewedFilePath = directory.appendingPathComponent("gone.mov").path
+
+        let model = AppModel(settings: settings, player: PlayerController())
+
+        XCTAssertEqual(model.directory?.path, directory.path)
+        XCTAssertNil(AppSettings(defaults: defaults).lastViewedFilePath)
+        XCTAssertTrue(model.selection.isEmpty)
+    }
+
     func testSelectingAVideoStartsPlayback() throws {
         let videoURL = directory.appendingPathComponent("clip.mov")
         try Data().write(to: videoURL)
@@ -516,6 +570,21 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(model.items.first?.tagColors, [])
     }
 
+    func testSelectingANonPlayableFileKeepsTheLastViewedFile() throws {
+        try Data().write(to: directory.appendingPathComponent("notes.txt"))
+
+        let settings = AppSettings(defaults: defaults)
+        settings.lastViewedFilePath = "/tmp/previous.mov"
+        let model = AppModel(settings: settings, player: PlayerController(), restoreLastFolder: false)
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first)
+
+        model.selection = [item.id]
+        model.selectionDidChange()
+
+        XCTAssertEqual(settings.lastViewedFilePath, "/tmp/previous.mov")
+    }
+
     func testWindowTitleShowsTheSelectedFile() throws {
         try Data().write(to: directory.appendingPathComponent("a.mov"))
         try Data().write(to: directory.appendingPathComponent("b.mov"))
@@ -570,4 +639,25 @@ private struct TestTrash: FileTrashing {
         try FileManager.default.removeItem(at: url)
         return nil
     }
+}
+
+private final class RecordingPlayer: Player {
+    var onStateChange: ((PlayerState) -> Void)?
+    var onPositionChange: ((PlayerPosition) -> Void)?
+    var onEndOfFile: (() -> Void)?
+
+    var loadedURL: URL?
+    var didAutoplay = false
+
+    func attach(view: NSView) {}
+
+    func load(_ url: URL, autoplay: Bool) throws {
+        loadedURL = url
+        didAutoplay = autoplay
+    }
+
+    func play() {}
+    func pause() {}
+    func seek(to time: Double) {}
+    func stop() {}
 }

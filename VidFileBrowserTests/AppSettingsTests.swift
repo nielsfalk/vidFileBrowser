@@ -54,6 +54,15 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(reloaded.lastFolderPath, "/tmp")
     }
 
+    func testLastViewedFileIsPersisted() {
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertNil(settings.lastViewedFilePath)
+
+        settings.lastViewedFilePath = "/tmp/clip.mov"
+
+        XCTAssertEqual(AppSettings(defaults: defaults).lastViewedFilePath, "/tmp/clip.mov")
+    }
+
     func testAutoTagSettingsArePersisted() {
         let settings = AppSettings(defaults: defaults)
         XCTAssertFalse(settings.autoTagEnabled)

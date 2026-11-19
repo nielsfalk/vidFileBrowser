@@ -114,9 +114,39 @@ final class AppModel {
         sortProperty = settings.sortProperty
         sortAscending = settings.sortAscending
 
-        if restoreLastFolder, let path = settings.lastFolderPath {
+        if restoreLastFolder {
+            restoreLastSession()
+        }
+    }
+
+    /// Reopens the folder of the last viewed file and selects that file. If it
+    /// is gone, fall back to the last folder.
+    private func restoreLastSession() {
+        if let path = settings.lastViewedFilePath {
+            let fileURL = URL(fileURLWithPath: path)
+            var isDirectory: ObjCBool = false
+            if FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDirectory),
+               !isDirectory.boolValue {
+                open(fileURL.deletingLastPathComponent())
+                if let item = items.first(where: { sameFile($0.url, fileURL) }) {
+                    selection = [item.id]
+                    showSelectedItem(autoplay: false)
+                }
+                return
+            }
+            settings.lastViewedFilePath = nil
+        }
+
+        if let path = settings.lastFolderPath {
             open(URL(fileURLWithPath: path, isDirectory: true))
         }
+    }
+
+    /// Compares two URLs by the file they point at, so `/var` and `/private/var`
+    /// spellings of the same path still match.
+    private func sameFile(_ lhs: URL, _ rhs: URL) -> Bool {
+        lhs.resolvingSymlinksInPath().standardizedFileURL
+            == rhs.resolvingSymlinksInPath().standardizedFileURL
     }
 
     func open(_ url: URL) {
@@ -241,6 +271,10 @@ final class AppModel {
     }
 
     func playSelectedItem() {
+        showSelectedItem(autoplay: true)
+    }
+
+    private func showSelectedItem(autoplay: Bool) {
         let selected = selectedItems
         guard selected.count == 1, let item = selected.first, !item.isDirectory else {
             clearMedia()
@@ -249,12 +283,14 @@ final class AppModel {
 
         switch item.kind {
         case .video:
+            settings.lastViewedFilePath = item.url.path
             image = nil
             imageURL = nil
             scheduleAutoTag(for: item)
             guard player.currentURL != item.url else { return }
-            player.load(item.url, autoplay: true)
+            player.load(item.url, autoplay: autoplay)
         case .image:
+            settings.lastViewedFilePath = item.url.path
             player.stop()
             scheduleAutoTag(for: item)
             guard imageURL != item.url else { return }
@@ -432,6 +468,10 @@ final class AppModel {
         if pinnedItemURL == item.url {
             clearPinnedPosition()
         }
+        if let lastViewedFilePath = settings.lastViewedFilePath,
+           sameFile(URL(fileURLWithPath: lastViewedFilePath), item.url) {
+            settings.lastViewedFilePath = target.path
+        }
         let wasPlaying = player.currentURL == item.url
         reload()
 
@@ -537,6 +577,10 @@ final class AppModel {
         guard !removed.isEmpty else { return }
         if let pinnedItemURL, removed.contains(pinnedItemURL) {
             clearPinnedPosition()
+        }
+        if let lastViewedFilePath = settings.lastViewedFilePath,
+           removed.contains(where: { sameFile($0, URL(fileURLWithPath: lastViewedFilePath)) }) {
+            settings.lastViewedFilePath = nil
         }
 
         let index = items.firstIndex { removed.contains($0.url) } ?? 0

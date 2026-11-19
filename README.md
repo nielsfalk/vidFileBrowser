@@ -60,7 +60,7 @@ Not recommended: **Electron, Tauri, Flutter and Compose Desktop**. Each requires
 
 - The divider between the file browser and the player can be resized.
 - On launch, the app reopens the last folder and restores the window size, position and divider position.
-- The last viewed file is remembered. If it was in another folder, that folder is opened and the file is selected again.
+- The last viewed file is remembered. If it was in another folder, that folder is opened and the file is selected again. A restored video is loaded in the player but does not start playing until the user presses Space. If the file no longer exists, the app falls back to the last folder.
 
 ### Window title
 
@@ -255,7 +255,7 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T08 Remember the last folder, window frame and divider position across launches
 - [x] T56 Quit the app when the last window is closed
 - [x] T60 Show the selected file in the window title as `VidFileBrowser - <file>` when exactly one file is selected
-- [ ] T68 Remember the last viewed file, open its folder on launch and select the file again
+- [x] T68 Remember the last viewed file, open its folder on launch and select the file again
 
 ### Breadcrumb path
 
