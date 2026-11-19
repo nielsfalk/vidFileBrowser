@@ -26,6 +26,14 @@ struct FinderTagService {
         try setTags(tags, on: url)
     }
 
+    /// Adds a tag unless the file already has that color.
+    func add(color: TagColor, on url: URL) throws {
+        var tags = tags(of: url)
+        guard !tags.contains(where: { $0.color == color }) else { return }
+        tags.append(FileTag(name: Self.defaultName(for: color), color: color))
+        try setTags(tags, on: url)
+    }
+
     func removeAll(from url: URL) throws {
         try setTags([], on: url)
     }

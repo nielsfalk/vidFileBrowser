@@ -471,6 +471,51 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(model.selectedItems.map(\.name), ["c.mov"])
     }
 
+    func testPlayedFilesAreTaggedAfterTheDelay() throws {
+        try Data().write(to: directory.appendingPathComponent("clip.mov"))
+
+        let settings = AppSettings(defaults: defaults)
+        settings.autoTagEnabled = true
+        settings.autoTagColor = .green
+
+        let model = AppModel(
+            settings: settings,
+            player: PlayerController(),
+            autoTagDelay: .milliseconds(50),
+            restoreLastFolder: false
+        )
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first)
+        model.selection = [item.id]
+        model.selectionDidChange()
+
+        let deadline = Date().addingTimeInterval(2)
+        while model.items.first?.tagColors != [.green], Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.01))
+        }
+
+        XCTAssertEqual(model.items.first?.tagColors, [.green])
+    }
+
+    func testAutomaticTagIsOffByDefault() throws {
+        try Data().write(to: directory.appendingPathComponent("clip.mov"))
+
+        let model = AppModel(
+            settings: AppSettings(defaults: defaults),
+            player: PlayerController(),
+            autoTagDelay: .milliseconds(50),
+            restoreLastFolder: false
+        )
+        model.open(directory)
+        let item = try XCTUnwrap(model.items.first)
+        model.selection = [item.id]
+        model.selectionDidChange()
+
+        RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+
+        XCTAssertEqual(model.items.first?.tagColors, [])
+    }
+
     func testWindowTitleShowsTheSelectedFile() throws {
         try Data().write(to: directory.appendingPathComponent("a.mov"))
         try Data().write(to: directory.appendingPathComponent("b.mov"))

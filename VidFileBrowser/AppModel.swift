@@ -15,6 +15,8 @@ final class AppModel {
     private let trashService: FileTrashing
     private let fileOperationService = FileOperationService()
     private let conflictResolver: ((FileConflict) -> ConflictResolution)?
+    private let autoTagDelay: Duration
+    private var autoTagTask: Task<Void, Never>?
     private var applyToAllResolution: ConflictResolution?
     private var cutURLs: [URL] = []
     let favorites: FavoritesStore
@@ -97,6 +99,7 @@ final class AppModel {
         pasteboard: NSPasteboard = .general,
         trash: FileTrashing = FinderTrash(),
         conflictResolver: ((FileConflict) -> ConflictResolution)? = nil,
+        autoTagDelay: Duration = .seconds(2),
         restoreLastFolder: Bool = true
     ) {
         self.loader = loader
@@ -107,6 +110,7 @@ final class AppModel {
         self.pasteboard = pasteboard
         self.trashService = trash
         self.conflictResolver = conflictResolver
+        self.autoTagDelay = autoTagDelay
         sortProperty = settings.sortProperty
         sortAscending = settings.sortAscending
 
@@ -247,10 +251,12 @@ final class AppModel {
         case .video:
             image = nil
             imageURL = nil
+            scheduleAutoTag(for: item)
             guard player.currentURL != item.url else { return }
             player.load(item.url, autoplay: true)
         case .image:
             player.stop()
+            scheduleAutoTag(for: item)
             guard imageURL != item.url else { return }
             imageURL = item.url
             image = ImageLoader.image(at: item.url)
@@ -260,9 +266,49 @@ final class AppModel {
     }
 
     private func clearMedia() {
+        cancelAutoTag()
         player.stop()
         image = nil
         imageURL = nil
+    }
+
+    // MARK: - Automatic tags
+
+    private func scheduleAutoTag(for item: FileItem) {
+        cancelAutoTag()
+        guard settings.autoTagEnabled else { return }
+
+        let delay = autoTagDelay
+        autoTagTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled,
+                  let self,
+                  self.settings.autoTagEnabled,
+                  self.selectedItems.count == 1,
+                  let current = self.selectedItems.first,
+                  current.url == item.url
+            else {
+                return
+            }
+            self.addAutoTag(to: current)
+        }
+    }
+
+    private func cancelAutoTag() {
+        autoTagTask?.cancel()
+        autoTagTask = nil
+    }
+
+    private func addAutoTag(to item: FileItem) {
+        let color = settings.autoTagColor
+        guard !item.tagColors.contains(color) else { return }
+
+        do {
+            try tagService.add(color: color, on: item.url)
+            reload()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
     }
 
     // MARK: - Trimming

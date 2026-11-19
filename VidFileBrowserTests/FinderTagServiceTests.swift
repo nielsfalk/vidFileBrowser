@@ -39,6 +39,13 @@ final class FinderTagServiceTests: XCTestCase {
         XCTAssertTrue(tags.contains(FileTag(name: "Blue", color: .blue)))
     }
 
+    func testAddDoesNotDuplicateOrRemove() throws {
+        try service.add(color: .green, on: file)
+        try service.add(color: .green, on: file)
+
+        XCTAssertEqual(service.tags(of: file), [FileTag(name: "Green", color: .green)])
+    }
+
     func testRemoveAll() throws {
         try service.toggle(color: .green, on: file)
         try service.toggle(color: .yellow, on: file)
