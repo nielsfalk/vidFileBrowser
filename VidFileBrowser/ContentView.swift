@@ -134,6 +134,24 @@ struct ContentView: View {
             }
 
             Spacer()
+
+            if !model.favorites.folders.isEmpty {
+                Menu {
+                    ForEach(model.favorites.folders) { folder in
+                        if let url = model.favorites.url(for: folder) {
+                            Button(folder.name) {
+                                model.open(url)
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Favorites", systemImage: "star")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .help("Open a favorite folder")
+            }
+
             Button("Open Folder…", action: chooseFolder)
                 .keyboardShortcut("o", modifiers: .command)
         }
