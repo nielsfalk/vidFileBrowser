@@ -301,6 +301,10 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T57 Add `_t` to the trimmed file name before the first dot
 - [x] T58 Ask to add a keyframe at the beginning by re-encoding when none exists before the trim point
 - [x] T64 Keep the trimmed file in the same position in the file list when the `_t` suffix changes its name
+- [ ] T71 Allow several trims to run in parallel, one per file
+- [ ] T72 Show a trimming indicator in the top left corner with the number of trims in progress
+- [ ] T73 Do not interrupt playback when a trim finishes while another file is playing
+- [ ] T74 When quitting, ask whether to wait for the running trims or cancel them
 
 ### Finder tags
 
