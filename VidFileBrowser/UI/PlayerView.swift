@@ -39,18 +39,6 @@ struct PlayerView: View {
             if let info = model.playerInfoState {
                 PlayerInfoView(state: info)
             }
-
-            if model.isTrimming {
-                VStack(spacing: 10) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Trimming…")
-                        .font(.callout)
-                        .foregroundStyle(.white)
-                }
-                .padding(20)
-                .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 10))
-            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
@@ -98,12 +86,12 @@ struct PlayerView: View {
         Button("Trim Left at Playhead") {
             model.trimLeft()
         }
-        .disabled(player.currentURL == nil || model.isTrimming)
+        .disabled(player.currentURL == nil || model.isTrimmingCurrentItem)
 
         Button("Trim Right at Playhead") {
             model.trimRight()
         }
-        .disabled(player.currentURL == nil || model.isTrimming)
+        .disabled(player.currentURL == nil || model.isTrimmingCurrentItem)
 
         if let item = model.selectedItem {
             let targets = model.selectedItems.isEmpty ? [item] : model.selectedItems

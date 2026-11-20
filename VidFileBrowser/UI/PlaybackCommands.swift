@@ -48,14 +48,14 @@ struct PlaybackCommands: Commands {
             Divider()
 
             Button("Trim Left at Playhead") {
-                if hasVideo, !model.isTrimming {
+                if hasVideo, !model.isTrimmingCurrentItem {
                     model.trimLeft()
                 }
             }
             .keyboardShortcut("n", modifiers: [])
 
             Button("Trim Right at Playhead") {
-                if hasVideo, !model.isTrimming {
+                if hasVideo, !model.isTrimmingCurrentItem {
                     model.trimRight()
                 }
             }

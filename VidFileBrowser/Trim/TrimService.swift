@@ -39,6 +39,13 @@ protocol TrimServicing {
     /// Trims and replaces the file, returning the URL of the trimmed file.
     @discardableResult
     func trimReplacing(_ url: URL, range: TrimRange) throws -> URL
+
+    /// Stops the tools that are running for active trims.
+    func cancelAll()
+}
+
+extension TrimServicing {
+    func cancelAll() {}
 }
 
 struct FinderTrash: FileTrashing {
@@ -70,6 +77,10 @@ final class TrimService: TrimServicing {
         self.runner = runner
         self.trash = trash
         self.confirmReencode = confirmReencode
+    }
+
+    func cancelAll() {
+        runner.cancelAll()
     }
 
     func keyframe(atOrBefore time: Double, in url: URL, searchWindow: Double = 10) throws -> Double {

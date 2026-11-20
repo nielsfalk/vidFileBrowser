@@ -27,7 +27,7 @@ final class AppModel {
     private(set) var errorMessage: String?
     private(set) var image: NSImage?
     private(set) var imageURL: URL?
-    private(set) var isTrimming = false
+    private(set) var activeTrimURLs: Set<URL> = []
     private(set) var trimError: String?
     var selection: Set<FileItem.ID> = [] {
         didSet {
@@ -54,8 +54,9 @@ final class AppModel {
     }
 
     private var allItems: [FileItem] = []
-    private var pinnedItemURL: URL?
-    private var pinnedIndex: Int?
+    private var pinnedPositions: [URL: Int] = [:]
+    private var trimWaiters: [() -> Void] = []
+    private var trimsCancelled = false
     private var isMovingSelection = false
     private var selectionAnchor: FileItem.ID?
     private var selectionFocus: FileItem.ID?
@@ -66,6 +67,16 @@ final class AppModel {
 
     var selectedItems: [FileItem] {
         items.filter { selection.contains($0.id) }
+    }
+
+    var isTrimming: Bool { !activeTrimURLs.isEmpty }
+
+    var trimCount: Int { activeTrimURLs.count }
+
+    /// Whether the video currently shown in the player is being trimmed.
+    var isTrimmingCurrentItem: Bool {
+        guard let url = player.currentURL else { return false }
+        return activeTrimURLs.contains(url)
     }
 
     /// The window title names the selected file, so it is visible in the
@@ -465,9 +476,7 @@ final class AppModel {
         }
 
         errorMessage = nil
-        if pinnedItemURL == item.url {
-            clearPinnedPosition()
-        }
+        pinnedPositions[item.url] = nil
         if let lastViewedFilePath = settings.lastViewedFilePath,
            sameFile(URL(fileURLWithPath: lastViewedFilePath), item.url) {
             settings.lastViewedFilePath = target.path
@@ -575,8 +584,8 @@ final class AppModel {
     /// continues without an extra click.
     private func handleRemoved(_ removed: Set<URL>) {
         guard !removed.isEmpty else { return }
-        if let pinnedItemURL, removed.contains(pinnedItemURL) {
-            clearPinnedPosition()
+        for url in removed {
+            pinnedPositions[url] = nil
         }
         if let lastViewedFilePath = settings.lastViewedFilePath,
            removed.contains(where: { sameFile($0, URL(fileURLWithPath: lastViewedFilePath)) }) {
@@ -635,10 +644,13 @@ final class AppModel {
     }
 
     private func performTrim(url: URL, range: TrimRange) {
-        guard range.duration > 0.05, !isTrimming else { return }
+        guard range.duration > 0.05, !activeTrimURLs.contains(url) else { return }
 
+        if activeTrimURLs.isEmpty {
+            trimsCancelled = false
+        }
         let itemIndex = items.firstIndex { $0.url == url }
-        isTrimming = true
+        activeTrimURLs.insert(url)
         trimError = nil
         let service = trimService
 
@@ -646,38 +658,84 @@ final class AppModel {
             do {
                 let trimmedURL = try service.trimReplacing(url, range: range)
                 DispatchQueue.main.async {
-                    guard let self else { return }
-                    self.isTrimming = false
-                    if let itemIndex {
-                        self.pinnedItemURL = trimmedURL
-                        self.pinnedIndex = itemIndex
-                    }
-                    self.reload()
-                    if let item = self.items.first(where: { $0.url == trimmedURL }) {
-                        self.selection = [item.id]
-                        self.player.load(trimmedURL, autoplay: true)
-                    }
+                    self?.finishTrim(url: url, trimmedURL: trimmedURL, itemIndex: itemIndex, error: nil)
                 }
             } catch {
                 DispatchQueue.main.async {
-                    guard let self else { return }
-                    self.isTrimming = false
-                    self.trimError = error.localizedDescription
+                    self?.finishTrim(url: url, trimmedURL: nil, itemIndex: itemIndex, error: error)
                 }
             }
+        }
+    }
+
+    /// A finished trim only takes over the player when its file is still the
+    /// one on screen; another file that started playing keeps playing.
+    private func finishTrim(url: URL, trimmedURL: URL?, itemIndex: Int?, error: Error?) {
+        activeTrimURLs.remove(url)
+        defer { notifyTrimWaitersIfIdle() }
+
+        guard !trimsCancelled else { return }
+        if let error {
+            trimError = error.localizedDescription
+            return
+        }
+        guard let trimmedURL else { return }
+
+        let wasCurrent = player.currentURL == url || imageURL == url
+        if let itemIndex {
+            pinnedPositions[trimmedURL] = itemIndex
+        }
+        reload()
+        if wasCurrent, let item = items.first(where: { $0.url == trimmedURL }) {
+            selection = [item.id]
+            player.load(trimmedURL, autoplay: true)
+        }
+    }
+
+    /// Stops all running trims. The original files are left untouched.
+    func cancelTrims() {
+        guard !activeTrimURLs.isEmpty else { return }
+        trimsCancelled = true
+        trimService.cancelAll()
+    }
+
+    /// Calls the completion once no trim is running, so the app can quit after
+    /// the last one has finished or has been cancelled.
+    func waitForTrimsToFinish(_ completion: @escaping () -> Void) {
+        if activeTrimURLs.isEmpty {
+            completion()
+        } else {
+            trimWaiters.append(completion)
+        }
+    }
+
+    private func notifyTrimWaitersIfIdle() {
+        guard activeTrimURLs.isEmpty else { return }
+        let waiters = trimWaiters
+        trimWaiters = []
+        for waiter in waiters {
+            waiter()
         }
     }
 
     private func resort() {
         var sorted = FileSorter.sorted(allItems, by: sortProperty, ascending: sortAscending)
 
-        // A trim renames the file with `_t`. Keep it at its old row instead of
-        // letting the new name move it elsewhere in the sorted list.
-        if let pinnedItemURL, let pinnedIndex,
-           let index = sorted.firstIndex(where: { $0.url == pinnedItemURL }),
-           index != pinnedIndex {
-            let item = sorted.remove(at: index)
-            sorted.insert(item, at: min(pinnedIndex, sorted.count))
+        // A trim renames the file with `_t`. Keep every trimmed file at its old
+        // row instead of letting the new name move it elsewhere in the sorted
+        // list. Inserting in ascending order keeps several pins independent.
+        let pins = pinnedPositions
+            .compactMap { (url, index) -> (index: Int, item: FileItem)? in
+                guard let item = sorted.first(where: { $0.url == url }) else { return nil }
+                return (index, item)
+            }
+            .sorted { $0.index < $1.index }
+        if !pins.isEmpty {
+            let pinnedURLs = Set(pins.map(\.item.url))
+            sorted.removeAll { pinnedURLs.contains($0.url) }
+            for pin in pins {
+                sorted.insert(pin.item, at: min(pin.index, sorted.count))
+            }
         }
 
         items = sorted
@@ -686,7 +744,6 @@ final class AppModel {
     }
 
     private func clearPinnedPosition() {
-        pinnedItemURL = nil
-        pinnedIndex = nil
+        pinnedPositions.removeAll()
     }
 }

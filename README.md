@@ -146,6 +146,9 @@ Behavior:
 - The original file is moved to the Trash, so it can be restored from there. There is no in-app undo.
 - Finder tags and the file's dates (creation and modification date) are preserved on the trimmed file.
 - The trimmed file keeps its position in the file list, even though the `_t` suffix changes its name.
+- Several trims can run at the same time, one per file. A trimming indicator in the top left corner shows how many are in progress.
+- A trim that finishes while another file is playing leaves that file playing.
+- When quitting while trims are running, the app asks whether to wait for them, cancel them, or stay open.
 
 ## Favorite folders
 
@@ -301,10 +304,10 @@ Every commit references one of these task numbers (see `agents.md`). A checked t
 - [x] T57 Add `_t` to the trimmed file name before the first dot
 - [x] T58 Ask to add a keyframe at the beginning by re-encoding when none exists before the trim point
 - [x] T64 Keep the trimmed file in the same position in the file list when the `_t` suffix changes its name
-- [ ] T71 Allow several trims to run in parallel, one per file
-- [ ] T72 Show a trimming indicator in the top left corner with the number of trims in progress
-- [ ] T73 Do not interrupt playback when a trim finishes while another file is playing
-- [ ] T74 When quitting, ask whether to wait for the running trims or cancel them
+- [x] T71 Allow several trims to run in parallel, one per file
+- [x] T72 Show a trimming indicator in the top left corner with the number of trims in progress
+- [x] T73 Do not interrupt playback when a trim finishes while another file is playing
+- [x] T74 When quitting, ask whether to wait for the running trims or cancel them
 
 ### Finder tags
 

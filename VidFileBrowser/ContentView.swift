@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -35,6 +36,12 @@ struct ContentView: View {
                 }
                 PlayerView(model: model)
             }
+            .overlay(alignment: .topLeading) {
+                if model.trimCount > 0 {
+                    TrimIndicatorView(count: model.trimCount)
+                        .padding(12)
+                }
+            }
         }
         .frame(minWidth: 900, minHeight: 560)
         .background(
@@ -43,6 +50,9 @@ struct ContentView: View {
             }
             .frame(width: 0, height: 0)
         )
+        .onAppear {
+            (NSApp.delegate as? AppDelegate)?.model = model
+        }
         .onChange(of: browserWidth) { _, newWidth in
             settings.browserWidth = Double(newWidth)
         }

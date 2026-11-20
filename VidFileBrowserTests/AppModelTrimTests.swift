@@ -97,14 +97,86 @@ final class AppModelTrimTests: XCTestCase {
         XCTAssertNil(model.trimError)
     }
 
-    private func makeModel(trimmer: RecordingTrimmer) throws -> AppModel {
+    func testTwoFilesCanBeTrimmedAtTheSameTime() throws {
+        try Data().write(to: directory.appendingPathComponent("second.mov"))
+
+        let trimmer = GatedTrimmer()
+        let model = try makeModel(trimmer: trimmer)
+
+        model.trimLeft()
+        model.selection = [try XCTUnwrap(model.items.first { $0.name == "second.mov" }).id]
+        model.selectionDidChange()
+        model.trimLeft()
+
+        XCTAssertEqual(model.trimCount, 2)
+        XCTAssertTrue(model.isTrimming)
+
+        trimmer.releaseAll()
+        try waitForTrim(model)
+
+        XCTAssertEqual(trimmer.callCount, 2)
+        XCTAssertEqual(Set(model.items.map(\.name)), ["clip_t.mov", "second_t.mov"])
+        XCTAssertEqual(model.trimCount, 0)
+    }
+
+    func testAFinishedTrimDoesNotInterruptAnotherFile() throws {
+        try Data().write(to: directory.appendingPathComponent("second.mov"))
+
+        let trimmer = GatedTrimmer()
+        let model = try makeModel(trimmer: trimmer)
+
+        // Start trimming clip.mov, then move on to second.mov while it runs.
+        model.trimLeft()
+        let second = try XCTUnwrap(model.items.first { $0.name == "second.mov" })
+        model.selection = [second.id]
+        model.selectionDidChange()
+
+        trimmer.releaseAll()
+        try waitForTrim(model)
+
+        XCTAssertEqual(model.player.currentURL, second.url)
+        XCTAssertEqual(model.selection, [second.id])
+    }
+
+    func testCancellingTrimsLeavesTheFileAndSkipsTheError() throws {
+        let trimmer = GatedTrimmer()
+        let model = try makeModel(trimmer: trimmer)
+
+        model.trimLeft()
+        XCTAssertEqual(model.trimCount, 1)
+
+        model.cancelTrims()
+        XCTAssertEqual(trimmer.cancelCalls, 1)
+
+        try waitForTrim(model)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: videoURL.path))
+        XCTAssertNil(model.trimError)
+    }
+
+    func testWaitingForTrimsCallsBackAfterTheLastOne() throws {
+        let trimmer = GatedTrimmer()
+        let model = try makeModel(trimmer: trimmer)
+
+        var finished = false
+        model.trimLeft()
+        model.waitForTrimsToFinish { finished = true }
+        XCTAssertFalse(finished)
+
+        trimmer.releaseAll()
+        try waitForTrim(model)
+
+        XCTAssertTrue(finished)
+    }
+
+    private func makeModel(trimmer: TrimServicing) throws -> AppModel {
         let model = try makeModel(trimmer: trimmer, in: directory)
         model.selection = [try XCTUnwrap(model.items.first).id]
         model.selectionDidChange()
         return model
     }
 
-    private func makeModel(trimmer: RecordingTrimmer, in directory: URL) throws -> AppModel {
+    private func makeModel(trimmer: TrimServicing, in directory: URL) throws -> AppModel {
         let player = PlayerController(player: StubPlayer())
         let model = AppModel(
             settings: AppSettings(defaults: defaults),
@@ -137,6 +209,62 @@ private final class RecordingTrimmer: TrimServicing {
             .appendingPathComponent(TrimNaming.trimmedName(for: url.lastPathComponent))
         try FileManager.default.moveItem(at: url, to: destination)
         return destination
+    }
+}
+
+/// Keeps trims running until the test releases them, so parallel work and
+/// cancellation can be observed.
+private final class GatedTrimmer: TrimServicing {
+    private let lock = NSLock()
+    private let gate = DispatchSemaphore(value: 0)
+    private var ranges: [TrimRange] = []
+    private var isCancelled = false
+    private var cancellations = 0
+
+    var callCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return ranges.count
+    }
+
+    var cancelCalls: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return cancellations
+    }
+
+    func releaseAll() {
+        for _ in 0..<8 {
+            gate.signal()
+        }
+    }
+
+    func trimReplacing(_ url: URL, range: TrimRange) throws -> URL {
+        lock.lock()
+        ranges.append(range)
+        lock.unlock()
+
+        gate.wait()
+
+        lock.lock()
+        let cancelled = isCancelled
+        lock.unlock()
+        if cancelled {
+            throw TrimError.failed("Cancelled")
+        }
+
+        let destination = url.deletingLastPathComponent()
+            .appendingPathComponent(TrimNaming.trimmedName(for: url.lastPathComponent))
+        try FileManager.default.moveItem(at: url, to: destination)
+        return destination
+    }
+
+    func cancelAll() {
+        lock.lock()
+        isCancelled = true
+        cancellations += 1
+        lock.unlock()
+        releaseAll()
     }
 }
 
